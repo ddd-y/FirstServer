@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Head">
+      <UniqueIdentifier>{c9a40597-d633-4834-b9ce-67a116b78a57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{460385f1-eb5a-4aa3-a49a-301f4fb6e16e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MyInternet.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="metaProcess.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessPool.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="MyInternet.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="metaProcess.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessPool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
