@@ -1,16 +1,36 @@
 #pragma once
-#include<array>
+#include <errno.h>        
+#include<cstring>
+#include<iostream>
+#include <sys/epoll.h>
 #include<vector>
+#include<mutex>
+
+constexpr int FIRST_PORT = 8080;
+constexpr int MAX_EVENTS = 1024;
+class Acceptor;
+class ThreadPool;
+// Manages network connections and epoll instance
 class MyInternet
 {
 private:
-	int Thefd;
-	std::array<char,1024> buffer;
+	int epollfd;
+	Acceptor* TheAcceptor;
+
+	std::mutex epoll_mutex;
+	std::vector<int> DisconnectList;
+
+	ThreadPool* TheThreadPool;
+	void ProcessDisconnections();
 public:
-	//prepare for connection before actually connecting
-	MyInternet() :Thefd(-1){}
-	void PreConnect();
-	void Connect();
-	void Disconnect();
+	void registerEpoll(int fd, uint32_t events);
+	MyInternet();
+	void MainLoop();
+
+	void RemoveConnection(int fd)
+	{
+		std::lock_guard<std::mutex> lock(epoll_mutex);
+		DisconnectList.push_back(fd);
+	}
 };
 

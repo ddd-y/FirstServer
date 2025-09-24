@@ -75,15 +75,23 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClInclude Include="Acceptor.h" />
+    <ClInclude Include="ClientStateManager.h" />
+    <ClInclude Include="Handler.h" />
     <ClInclude Include="metaProcess.h" />
     <ClInclude Include="MyInternet.h" />
     <ClInclude Include="ProcessPool.h" />
+    <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Acceptor.cpp" />
+    <ClCompile Include="ClientStateManager.cpp" />
+    <ClCompile Include="Handler.cpp" />
     <ClCompile Include="mainfunction.cpp" />
     <ClCompile Include="metaProcess.cpp" />
     <ClCompile Include="MyInternet.cpp" />
     <ClCompile Include="ProcessPool.cpp" />
+    <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
