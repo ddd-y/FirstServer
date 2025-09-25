@@ -16,6 +16,7 @@ void Handler::HandleRead()
 	if(data== CLENT_REQUEST)
 	{
 		//handle client request
+		TheClientStateManager.AddClient(client_fd);
 	}
 	else if(data == SERVER_JOIN)
 	{
