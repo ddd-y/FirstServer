@@ -1,9 +1,11 @@
 #pragma once
 #include"metaProcess.h"
+#include<set>
 #include<map>
 #include<vector>
 #include<string>
 #include<mutex>
+#include<queue>
 
 enum ProcessEvent
 {
@@ -16,17 +18,16 @@ class ProcessPool
 private:
 	//total number of processes
 	int ProcessNum;
-	//used to store all metaprocesses
-	std::map<int, metaProcess> Processes;
-	std::vector<int> ProcessIDs;
+	//used to store Valid processes
+	std::map<int, metaProcess*> ValidProcesses;
 
-	//the first int is the process id, the second int is the load of the process
-	std::map<int, int> ProcessLoads;
 	std::mutex process_mutex;
+	std::set<metaProcess*, CompareMetaProcess> ProcessQueue;
 public:
 	//add a new process to the pool
-	void AddProcess(const metaProcess& NewProcess);
+	void AddProcess(metaProcess&& NewProcess);
 	void UpDateProcessState(int ProcessID, int NewLoad);
+	void RemoveProcess(int ProcessID);
 	//choose the process with the least load
 	std::string GetProcessIP();
 };

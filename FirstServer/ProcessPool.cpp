@@ -1,43 +1,58 @@
 #include "ProcessPool.h"
 
-void ProcessPool::AddProcess(const metaProcess& NewProcess)
+void ProcessPool::AddProcess(metaProcess&& NewProcess)
 {
+	if(NewProcess.relatedfd == -1 || NewProcess.IP.empty() || NewProcess.Port == 0)
+		return;
 	std::lock_guard<std::mutex> lock(process_mutex);
-	ProcessIDs.push_back(NewProcess.relatedfd);
-	Processes[NewProcess.relatedfd] = NewProcess;
-	ProcessLoads[NewProcess.relatedfd] = 0;
-	ProcessNum = ProcessIDs.size();
+	metaProcess* newProc = new metaProcess(std::move(NewProcess));
+	int pid = newProc->relatedfd;
+	if (ValidProcesses.find(pid) == ValidProcesses.end()) {
+		ValidProcesses[pid] = newProc;
+		ProcessQueue.emplace(newProc);
+	}
+	else 
+	{
+		delete newProc;
+	}
 }
 
 void ProcessPool::UpDateProcessState(int ProcessID, int NewLoad)
 {
 	std::lock_guard<std::mutex> lock(process_mutex);
-	if (Processes.find(ProcessID) != Processes.end())
+	auto it = ValidProcesses.find(ProcessID);
+	if (it != ValidProcesses.end())
 	{
-		ProcessLoads[ProcessID] = NewLoad;
+		metaProcess* proc = it->second;
+		// Remove and reinsert to update its position in the set
+		ProcessQueue.erase(proc);
+		proc->Load = NewLoad;
+		ProcessQueue.insert(proc);
+	}
+}
+
+void ProcessPool::RemoveProcess(int ProcessID)
+{
+	std::lock_guard<std::mutex> lock(process_mutex);
+	auto it = ValidProcesses.find(ProcessID);
+	if (it != ValidProcesses.end())
+	{
+		metaProcess* proc = it->second;
+		ProcessQueue.erase(proc);
+		ValidProcesses.erase(it);
+		delete proc;
 	}
 }
 
 std::string ProcessPool::GetProcessIP()
 {
 	std::lock_guard<std::mutex> lock(process_mutex);
-	int minLoad = INT32_MAX;
-	int minProcessID = -1;
-	//后面可以把这个改成优先队列
-	for (const auto& [pid, load] : ProcessLoads)
-	{
-		if (load < minLoad)
-		{
-			minLoad = load;
-			minProcessID = pid;
-		}
-	}
-	if (minProcessID != -1)
-	{
-		const metaProcess& proc = Processes[minProcessID];
-		++ProcessLoads[minProcessID];
-		return proc.IP + ":" + std::to_string(proc.Port);
-	}
-	return "";
+	if (ProcessQueue.empty())
+		return "";
+	//local prediction
+	auto it = ProcessQueue.begin();
+	int newLoad = (*it)->Load + 1;
+	UpDateProcessState((*it)->relatedfd, newLoad);
+	return (*it)->IP;
 }
 

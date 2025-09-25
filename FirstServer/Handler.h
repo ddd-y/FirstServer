@@ -9,6 +9,7 @@ enum HandlerState
 class ProcessPool;
 class MyInternet;
 class ThreadPool;
+class metaProcess;
 class Handler
 {
 private:
@@ -27,7 +28,8 @@ private:
 	const std::string CLENT_REQUEST = "Request";
 	const std::string SERVER_JOIN = "Join";
 
-	std::string getPeerIP(int conn_fd,int &getport);
+	//use conn_fd to find the corresponding metaProcess
+	metaProcess getMetaProcessByInfo(int conn_fd);
 public:
 	//use to know the exact logic of the handler
 	static ClientStateManager TheClientStateManager;
