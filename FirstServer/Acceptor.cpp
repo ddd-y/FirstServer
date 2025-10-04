@@ -1,13 +1,16 @@
 #include "Acceptor.h"
 #include <sys/socket.h>
 #include<cstring>
+#include<arpa/inet.h>
 #include"MyInternet.h"
+
 Acceptor::Acceptor(int port)
 {
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
     std::memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
+    //inet_pton(AF_INET, "198.168.78.129", &server_addr.sin_addr);
     server_addr.sin_port = htons(port);
     bind(listenfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
     //start listening

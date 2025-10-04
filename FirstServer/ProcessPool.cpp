@@ -48,7 +48,7 @@ std::string ProcessPool::GetProcessIP()
 {
 	std::lock_guard<std::mutex> lock(process_mutex);
 	if (ProcessQueue.empty())
-		return "";
+		return "None Server Available";
 	//local prediction
 	auto it = ProcessQueue.begin();
 	int newLoad = (*it)->Load + 1;

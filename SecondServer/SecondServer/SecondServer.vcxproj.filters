@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{d7d64484-c9a8-4d07-b294-371e51083738}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\HEAD">
+      <UniqueIdentifier>{d4aa3bda-253e-4831-8363-026435599f00}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="register.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="register.h">
+      <Filter>src\HEAD</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

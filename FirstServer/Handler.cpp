@@ -9,24 +9,36 @@
 void Handler::HandleRead()
 {
 	char buffer[1024];
-	ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
-
 	std::string data;
-	data.append(buffer, bytes_read);
-	if(data== CLENT_REQUEST)
+	ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer));
+	if (bytes_read > 0)
 	{
+		std::cout << "client say :" << buffer << std::endl;
+		data.append(buffer, bytes_read - 1);
+	}
+
+	
+
+	memset(buffer, 0, sizeof(buffer));
+	if(data== CLENT_REQUEST)
+	{	
+		std::cout << "enter to Adding" << std::endl;
 		//handle client request
 		TheClientStateManager.AddClient(client_fd);
 	}
 	else if(data == SERVER_JOIN)
-	{
+	{	
+		std::cout << "enter to registering" << std::endl;
 		//handle second type server read
 		TheProcessPool->AddProcess(getMetaProcessByInfo(client_fd));
+		
 	}
 	else
 	{
 		//invalid request
 	}
+
+	data = "";
 }
 
 void Handler::HandleWrite()
@@ -37,11 +49,13 @@ void Handler::HandleWrite()
 		write(client_fd, TheIP.c_str(), TheIP.size());
 		TheClientStateManager.RemoveClient(client_fd);
 		TheReactor->RemoveConnection(client_fd);
+		std::cout << "HandleWrite()" << std::endl;
+	
 	}
 	else
-	{
-		//handle second type server write
-		return;
+	{		//handle second type server write
+		std::cout << "HandleWrite()" << std::endl;
+		
 	}
 }
 

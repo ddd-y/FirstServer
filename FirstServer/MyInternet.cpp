@@ -3,6 +3,7 @@
 #include"ThreadPool.h"
 #include"Handler.h"
 #include<unistd.h>
+#include<iostream>
 
 void MyInternet::ProcessDisconnections()
 {
@@ -50,6 +51,7 @@ void MyInternet::MainLoop()
 	while(true)
 	{
 		ProcessDisconnections();
+		
 		int ready_fds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 		if (ready_fds == -1)
 		{
