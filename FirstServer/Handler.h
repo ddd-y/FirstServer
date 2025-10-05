@@ -27,7 +27,8 @@ private:
 	ThreadPool* TheThreadPool;
 	const std::string CLENT_REQUEST = "Request";
 	const std::string SERVER_JOIN = "Join";
-
+	const std::string SEVER_UPDATE = "Update";
+	const std::string MSG_DELIMITER = "\r\n";
 	//use conn_fd to find the corresponding metaProcess
 	metaProcess getMetaProcessByInfo(int conn_fd);
 public:
