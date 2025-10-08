@@ -24,6 +24,7 @@ private:
 	void ProcessDisconnections();
 public:
 	void registerEpoll(int fd, uint32_t events);
+	void modifyEpoll(int fd, uint32_t events);
 	MyInternet();
 	void MainLoop();
 

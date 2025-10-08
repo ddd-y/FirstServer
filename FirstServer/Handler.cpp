@@ -17,6 +17,7 @@ void Handler::HandleRead()
 	{
 		//handle client request
 		TheClientStateManager.AddClient(client_fd);
+		TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
 	}
 	else if(data == SERVER_JOIN)
 	{

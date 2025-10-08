@@ -1,6 +1,5 @@
 #pragma once
 #include <netinet/in.h>
-
 class MyInternet;
 class Acceptor
 {
