@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Head">
+      <UniqueIdentifier>{c9a40597-d633-4834-b9ce-67a116b78a57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{460385f1-eb5a-4aa3-a49a-301f4fb6e16e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Head\Handlerhead">
+      <UniqueIdentifier>{3acd9fac-7892-4019-a672-5e889694c689}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Handlersource">
+      <UniqueIdentifier>{43dd542c-25cd-4671-87bc-d9aee5a6feaf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MyInternet.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="metaProcess.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessPool.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="Acceptor.h">
+      <Filter>Head\Handlerhead</Filter>
+    </ClInclude>
+    <ClInclude Include="Handler.h">
+      <Filter>Head\Handlerhead</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadPool.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientStateManager.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="MyInternet.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="metaProcess.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessPool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="mainfunction.cpp" />
+    <ClCompile Include="Acceptor.cpp">
+      <Filter>Source\Handlersource</Filter>
+    </ClCompile>
+    <ClCompile Include="Handler.cpp">
+      <Filter>Source\Handlersource</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientStateManager.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
