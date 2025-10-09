@@ -72,11 +72,13 @@ void MyInternet::MainLoop()
 		for(int i=0;i<ready_fds;++i)
 		{
 			int fd = events[i].data.fd;
+			epoll_mutex.lock();
 			if(DisconnectList.find(fd) != DisconnectList.end())
 			{
 				// Skip processing for this fd
 				continue; 
 			}
+			epoll_mutex.unlock();
 			if(fd==TheAcceptor->GetListenFd())
 			{
 				TheAcceptor->AcceptConnection(this);
