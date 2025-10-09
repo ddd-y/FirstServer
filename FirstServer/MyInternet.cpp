@@ -31,6 +31,19 @@ void MyInternet::registerEpoll(int fd, uint32_t events)
 	}
 }
 
+void MyInternet::modifyEpoll(int fd, uint32_t events)
+{
+	epoll_event ev;
+	ev.data.fd = fd;
+	ev.events = events;
+	std::lock_guard<std::mutex> lock(epoll_mutex);
+
+	if (epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev) == -1)
+	{
+		std::cerr << "Failed to modify epoll events for fd " << fd << ": " << std::strerror(errno) << std::endl;
+	}
+}
+
 MyInternet::MyInternet()
 {
 	TheAcceptor = new Acceptor(FIRST_PORT);

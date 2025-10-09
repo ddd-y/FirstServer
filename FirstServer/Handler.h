@@ -6,6 +6,10 @@ enum HandlerState
 	READING,
 	WRITING
 };
+constexpr const char* CLIENT_REQUEST = "Request";
+constexpr const char* SERVER_JOIN = "Join";
+constexpr const char* SERVER_UPDATE = "Update";
+constexpr const int MAX_COMMAND_LENGTH = 7;
 class ProcessPool;
 class MyInternet;
 class ThreadPool;
@@ -13,8 +17,8 @@ class metaProcess;
 class Handler
 {
 private:
-	int client_fd;
 	HandlerState TaskState;
+	int client_fd;
 
 	void HandleRead();
 	void HandleWrite();
@@ -25,8 +29,6 @@ private:
 
 	MyInternet* TheReactor;
 	ThreadPool* TheThreadPool;
-	const std::string CLENT_REQUEST = "Request";
-	const std::string SERVER_JOIN = "Join";
 
 	//use conn_fd to find the corresponding metaProcess
 	metaProcess getMetaProcessByInfo(int conn_fd);

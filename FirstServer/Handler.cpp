@@ -9,24 +9,67 @@
 void Handler::HandleRead()
 {
 	char buffer[1024];
-	ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
+	ssize_t bytes_read;
+	do 
+	{
+		bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
+	} 
+	while (bytes_read == -1 && errno == EINTR); 
 
-	std::string data;
-	data.append(buffer, bytes_read);
-	if(data== CLENT_REQUEST)
+	if (bytes_read <= 0)
 	{
-		//handle client request
-		TheClientStateManager.AddClient(client_fd);
+		// error or connection closed by peer
+		return;
 	}
-	else if(data == SERVER_JOIN)
+	buffer[bytes_read] = '\0';  // be sure to null-terminate
+	std::string received_data(buffer, bytes_read);
+
+	std::string command = std::move(received_data.substr(0, MAX_COMMAND_LENGTH));
+
+	if (command == CLIENT_REQUEST)
 	{
+		TheClientStateManager.AddClient(client_fd);
+		TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
+		return;
+	}
+
+	if (command == SERVER_JOIN)
+	{
+
 		//handle second type server read
 		TheProcessPool->AddProcess(getMetaProcessByInfo(client_fd));
+		return;
 	}
-	else
+
+	if (command == SERVER_UPDATE)
 	{
-		//invalid request
+		std::string num_str = received_data.substr(MAX_COMMAND_LENGTH);
+		int num_read = num_str.size();
+		if (num_read <= 0)
+		{
+			return;
+		}
+
+		try
+		{
+			int ProcessID = getMetaProcessByInfo(client_fd).relatedfd;
+			int update_load = std::stoi(num_str);
+			TheProcessPool->UpDateProcessState(ProcessID,update_load);
+		}
+		catch (const std::invalid_argument&)
+		{
+			// 非法数字格式
+		}
+		catch (const std::out_of_range&)
+		{
+			// 数字超出范围
+		}
+		return;
 	}
+
+	//处理未知命令
+	const std::string err_msg = "Invalid command";
+	write(client_fd, err_msg.c_str(), err_msg.size());
 }
 
 void Handler::HandleWrite()
