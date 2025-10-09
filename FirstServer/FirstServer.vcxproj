@@ -59,6 +59,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
+    <RemoteCopyIncludeDirectories>$(RemoteCopyIncludeDirectories)</RemoteCopyIncludeDirectories>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -74,10 +75,15 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir)include</IncludePath>
+    <CopyAdditionalIncludes>true</CopyAdditionalIncludes>
+  </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="Acceptor.h" />
     <ClInclude Include="ClientStateManager.h" />
     <ClInclude Include="Handler.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="metaProcess.h" />
     <ClInclude Include="MyInternet.h" />
     <ClInclude Include="ProcessPool.h" />
@@ -87,13 +93,25 @@
     <ClCompile Include="Acceptor.cpp" />
     <ClCompile Include="ClientStateManager.cpp" />
     <ClCompile Include="Handler.cpp" />
+    <ClCompile Include="logger.cpp" />
     <ClCompile Include="mainfunction.cpp" />
     <ClCompile Include="metaProcess.cpp" />
     <ClCompile Include="MyInternet.cpp" />
     <ClCompile Include="ProcessPool.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
-  <ItemDefinitionGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <CppLanguageStandard>c++17</CppLanguageStandard>
+      <AdditionalIncludeDirectories>/home/dddy/projects/FirstServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+      </PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

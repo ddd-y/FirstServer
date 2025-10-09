@@ -2,7 +2,9 @@
 #include"Acceptor.h"
 #include"ThreadPool.h"
 #include"Handler.h"
+#include"ProcessPool.h"
 #include<unistd.h>
+#include"logger.h"
 
 void MyInternet::ProcessDisconnections()
 {
@@ -11,7 +13,7 @@ void MyInternet::ProcessDisconnections()
 	{
 		if (epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, nullptr) == -1) 
 		{
-			std::cerr << "Failed to remove file descriptor from epoll: " << std::strerror(errno) << std::endl;
+			LOG_ERROR("Failed to remove fd {} from epoll: {}", fd, std::strerror(errno));
 		}
 		close(fd);
 	}
@@ -25,7 +27,7 @@ void MyInternet::registerEpoll(int fd, uint32_t events)
 	std::lock_guard<std::mutex> lock(epoll_mutex);
 	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1)
 	{
-		std::cerr << "Failed to add file descriptor to epoll: " << std::strerror(errno) << std::endl;
+		LOG_ERROR("Failed to add fd {} to epoll: {}", fd, std::strerror(errno));
 	}
 }
 
@@ -38,7 +40,7 @@ void MyInternet::modifyEpoll(int fd, uint32_t events)
 
 	if (epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev) == -1)
 	{
-		std::cerr << "Failed to modify epoll events for fd " << fd << ": " << std::strerror(errno) << std::endl;
+		LOG_ERROR("Failed to modify epoll events for fd {}: {}", fd, std::strerror(errno));
 	}
 }
 
@@ -46,10 +48,11 @@ MyInternet::MyInternet()
 {
 	TheAcceptor = new Acceptor(FIRST_PORT);
 	TheThreadPool = new ThreadPool();
+	TheProcessPool = new ProcessPool();
 	epollfd = epoll_create1(EPOLL_CLOEXEC);
 	if (epollfd == -1)
 	{
-		std::cerr << "Failed to create epoll instance: " << std::strerror(errno) << std::endl;
+		LOG_ERROR("Failed to create epoll instance: {}", std::strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 	registerEpoll(TheAcceptor->GetListenFd(), EPOLLIN);
@@ -66,17 +69,19 @@ void MyInternet::MainLoop()
 		{
 			if (errno == EINTR)
 				continue; // Interrupted by signal, retry
-			std::cerr << "epoll_wait error: " << std::strerror(errno) << std::endl;
+			LOG_ERROR("epoll_wait error: {}", std::strerror(errno));
 			break;
 		}
 		for(int i=0;i<ready_fds;++i)
 		{
 			int fd = events[i].data.fd;
+			epoll_mutex.lock();
 			if(DisconnectList.find(fd) != DisconnectList.end())
 			{
 				// Skip processing for this fd
 				continue; 
 			}
+			epoll_mutex.unlock();
 			if(fd==TheAcceptor->GetListenFd())
 			{
 				TheAcceptor->AcceptConnection(this);
@@ -84,13 +89,13 @@ void MyInternet::MainLoop()
 			else if (events[i].events & EPOLLIN)
 			{
 				//Handle read event
-				Handler* NewHandler = new Handler(fd, READING, this,TheThreadPool);
+				Handler* NewHandler = new Handler(fd, READING, this,TheThreadPool,TheProcessPool);
 				NewHandler->StartThread();
 			}
 			else if(events[i].events & EPOLLOUT)
 			{
 				//Handle write event
-				Handler* NewHandler = new Handler(fd, WRITING, this,TheThreadPool);
+				Handler* NewHandler = new Handler(fd, WRITING, this,TheThreadPool,TheProcessPool);
 				NewHandler->StartThread();
 			}
 		}

@@ -11,16 +11,18 @@ constexpr int FIRST_PORT = 8080;
 constexpr int MAX_EVENTS = 1024;
 class Acceptor;
 class ThreadPool;
+class ProcessPool;
 // Manages network connections and epoll instance
 class MyInternet
 {
 private:
-	int epollfd;
-	Acceptor* TheAcceptor;
-
 	std::mutex epoll_mutex;
 	std::set<int> DisconnectList;
+
+	Acceptor* TheAcceptor;
 	ThreadPool* TheThreadPool;
+	ProcessPool* TheProcessPool;
+	int epollfd;
 	void ProcessDisconnections();
 public:
 	void registerEpoll(int fd, uint32_t events);

@@ -1,5 +1,6 @@
 #include "ProcessPool.h"
-
+#include<chrono>
+#include"logger.h"
 void ProcessPool::AddProcess(metaProcess&& NewProcess)
 {
 	if(NewProcess.relatedfd == -1 || NewProcess.IP.empty() || NewProcess.Port == 0)
@@ -26,7 +27,7 @@ void ProcessPool::UpDateProcessState(int ProcessID, int NewLoad)
 		metaProcess* proc = it->second;
 		// Remove and reinsert to update its position in the set
 		ProcessQueue.erase(proc);
-		proc->Load = NewLoad;
+		proc->addLoad(NewLoad);
 		ProcessQueue.insert(proc);
 	}
 }
@@ -48,11 +49,10 @@ std::string ProcessPool::GetProcessIP()
 {
 	std::lock_guard<std::mutex> lock(process_mutex);
 	if (ProcessQueue.empty())
+	{
 		return "";
-	//local prediction
+	}
 	auto it = ProcessQueue.begin();
-	int newLoad = (*it)->Load + 1;
-	UpDateProcessState((*it)->relatedfd, newLoad);
 	return (*it)->IP;
 }
 

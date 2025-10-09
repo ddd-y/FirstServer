@@ -2,6 +2,8 @@
 #include <sys/socket.h>
 #include<cstring>
 #include"MyInternet.h"
+#include"logger.h"
+
 Acceptor::Acceptor(int port)
 {
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -12,6 +14,7 @@ Acceptor::Acceptor(int port)
     bind(listenfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
     //start listening
     listen(listenfd, SOMAXCONN);
+	LOG_INFO("Server listening on port {}", port);
 }
 
 void Acceptor::AcceptConnection(MyInternet* TheReactor)
@@ -21,7 +24,7 @@ void Acceptor::AcceptConnection(MyInternet* TheReactor)
     int connfd = accept(listenfd, (struct sockaddr*)&client_addr, &client_len);
     if (connfd == -1)
     {
-        std::cerr << "Accept error: " << std::strerror(errno) << std::endl;
+        LOG_ERROR("Accept error: {}", std::strerror(errno)); // Ê¹ÓÃLOG_ERROR
         return;
     }
     // Register the new connection with epoll for read events
