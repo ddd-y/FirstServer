@@ -5,6 +5,7 @@
 #include <sys/epoll.h>
 #include<vector>
 #include<mutex>
+#include<set>	
 
 constexpr int FIRST_PORT = 8080;
 constexpr int MAX_EVENTS = 1024;
@@ -18,8 +19,7 @@ private:
 	Acceptor* TheAcceptor;
 
 	std::mutex epoll_mutex;
-	std::vector<int> DisconnectList;
-
+	std::set<int> DisconnectList;
 	ThreadPool* TheThreadPool;
 	void ProcessDisconnections();
 public:
@@ -30,8 +30,11 @@ public:
 
 	void RemoveConnection(int fd)
 	{
+		if (fd == -1) 
+			return;
 		std::lock_guard<std::mutex> lock(epoll_mutex);
-		DisconnectList.push_back(fd);
+		if(DisconnectList.find(fd) == DisconnectList.end())
+			DisconnectList.insert(fd);
 	}
 };
 

@@ -19,6 +19,7 @@ void Handler::HandleRead()
 	if (bytes_read <= 0)
 	{
 		// error or connection closed by peer
+		TheReactor->RemoveConnection(client_fd);
 		return;
 	}
 	buffer[bytes_read] = '\0';  // be sure to null-terminate

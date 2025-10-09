@@ -9,8 +9,6 @@ void MyInternet::ProcessDisconnections()
 	std::lock_guard<std::mutex> lock(epoll_mutex);
 	for (int fd : DisconnectList) 
 	{
-		if (fd == -1) 
-			continue;
 		if (epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, nullptr) == -1) 
 		{
 			std::cerr << "Failed to remove file descriptor from epoll: " << std::strerror(errno) << std::endl;
@@ -74,6 +72,11 @@ void MyInternet::MainLoop()
 		for(int i=0;i<ready_fds;++i)
 		{
 			int fd = events[i].data.fd;
+			if(DisconnectList.find(fd) != DisconnectList.end())
+			{
+				// Skip processing for this fd
+				continue; 
+			}
 			if(fd==TheAcceptor->GetListenFd())
 			{
 				TheAcceptor->AcceptConnection(this);
