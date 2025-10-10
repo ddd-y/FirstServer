@@ -4,7 +4,7 @@ void ProcessPool::AddProcess(metaProcess&& NewProcess)
 {
 	if(NewProcess.relatedfd == -1 || NewProcess.IP.empty() || NewProcess.Port == 0)
 		return;
-	std::lock_guard<std::mutex> lock(process_mutex);
+	process_mutex.lock();
 	metaProcess* newProc = new metaProcess(std::move(NewProcess));
 	int pid = newProc->relatedfd;
 	if (ValidProcesses.find(pid) == ValidProcesses.end()) {
@@ -15,6 +15,7 @@ void ProcessPool::AddProcess(metaProcess&& NewProcess)
 	{
 		delete newProc;
 	}
+	process_mutex.unlock();
 }
 
 void ProcessPool::UpDateProcessState(int ProcessID, int NewLoad)

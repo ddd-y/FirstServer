@@ -18,7 +18,7 @@ public:
 	~Register();
 	
 	short start();
-	void heart_info_to_server();
+	void heart_info_to_server(int heart_load);
 
 private:
 	sockaddr_in saddr;

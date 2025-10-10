@@ -2,7 +2,7 @@
 #include "register.h"
 #include <unistd.h>
 
-const std::string first_server_ip = "127.0.0.1";  // 先用localhost测试
+const std::string first_server_ip = "192.168.78.129";  // 先用localhost测试
 const short first_server_port = 8080;
 
 int main()
@@ -14,8 +14,8 @@ int main()
     }
 
     while (true)
-    {
-        regis.heart_info_to_server();
+    {   
+        regis.heart_info_to_server(1);
         sleep(5);  // 防止CPU过度占用
     }
 

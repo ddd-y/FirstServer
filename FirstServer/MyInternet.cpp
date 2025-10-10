@@ -2,16 +2,14 @@
 #include"Acceptor.h"
 #include"ThreadPool.h"
 #include"Handler.h"
+#include"ProcessPool.h"
 #include<unistd.h>
-#include<iostream>
 
 void MyInternet::ProcessDisconnections()
 {
 	std::lock_guard<std::mutex> lock(epoll_mutex);
 	for (int fd : DisconnectList) 
 	{
-		if (fd == -1) 
-			continue;
 		if (epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, nullptr) == -1) 
 		{
 			std::cerr << "Failed to remove file descriptor from epoll: " << std::strerror(errno) << std::endl;
@@ -32,10 +30,24 @@ void MyInternet::registerEpoll(int fd, uint32_t events)
 	}
 }
 
+void MyInternet::modifyEpoll(int fd, uint32_t events)
+{
+	epoll_event ev;
+	ev.data.fd = fd;
+	ev.events = events;
+	std::lock_guard<std::mutex> lock(epoll_mutex);
+
+	if (epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev) == -1)
+	{
+		std::cerr << "Failed to modify epoll events for fd " << fd << ": " << std::strerror(errno) << std::endl;
+	}
+}
+
 MyInternet::MyInternet()
 {
 	TheAcceptor = new Acceptor(FIRST_PORT);
 	TheThreadPool = new ThreadPool();
+	TheProcessPool = new ProcessPool();
 	epollfd = epoll_create1(EPOLL_CLOEXEC);
 	if (epollfd == -1)
 	{
@@ -51,7 +63,6 @@ void MyInternet::MainLoop()
 	while(true)
 	{
 		ProcessDisconnections();
-		
 		int ready_fds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 		if (ready_fds == -1)
 		{
@@ -63,6 +74,13 @@ void MyInternet::MainLoop()
 		for(int i=0;i<ready_fds;++i)
 		{
 			int fd = events[i].data.fd;
+			epoll_mutex.lock();
+			if(DisconnectList.find(fd) != DisconnectList.end())
+			{
+				// Skip processing for this fd
+				continue; 
+			}
+			epoll_mutex.unlock();
 			if(fd==TheAcceptor->GetListenFd())
 			{
 				TheAcceptor->AcceptConnection(this);
@@ -70,13 +88,13 @@ void MyInternet::MainLoop()
 			else if (events[i].events & EPOLLIN)
 			{
 				//Handle read event
-				Handler* NewHandler = new Handler(fd, READING, this,TheThreadPool);
+				Handler* NewHandler = new Handler(fd, READING, this,TheThreadPool,TheProcessPool);
 				NewHandler->StartThread();
 			}
 			else if(events[i].events & EPOLLOUT)
 			{
 				//Handle write event
-				Handler* NewHandler = new Handler(fd, WRITING, this,TheThreadPool);
+				Handler* NewHandler = new Handler(fd, WRITING, this,TheThreadPool,TheProcessPool);
 				NewHandler->StartThread();
 			}
 		}

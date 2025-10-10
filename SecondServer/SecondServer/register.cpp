@@ -39,9 +39,8 @@ short Register::start()
 		std::cout << "connect" << std::endl;
 	}
 	//³¢ÊÔ×¢²á
-	const std::string message = "Request";
-	snprintf(buffer, sizeof(buffer), "%s", message.c_str());
-	send(fd, buffer, strlen(buffer) + 1, 0);
+	const std::string message = "Join";
+	write(fd, message.c_str(), message.size());
 	
 	memset(buffer, 0, sizeof(buffer));
 	ssize_t len = recv(fd, buffer, sizeof(buffer), 0);
@@ -66,12 +65,35 @@ short Register::start()
 
 }
 
-void Register::heart_info_to_server()
+void Register::heart_info_to_server(int heart_load)
 {
+	
+	const std::string message = "Update";
+	const std::string command = message + std::to_string(heart_load);
+	int len_write = write(fd, command.c_str(), command.size());
+	if (len_write > 0) std::cout << "pump to server :" << command << std::endl;
+	else
+	{
+		std::cerr << "Faildto send heart info!" << std::endl;
+		return;
+	}
 
+	/*memset(buffer, 0, sizeof(buffer));
+	ssize_t len = recv(fd, buffer, sizeof(buffer), 0);
+	if (len > 0)
+	{
+		std::cout << "server say:" << buffer << std::endl;
 
-
-
+	}
+	else if (len == 0)
+	{
+		std::cout << "server close!" << std::endl;
+	}
+	else
+	{
+		std::cerr << "Failed to recv the message" << std::endl;
+	}*/
+	
 }
 
 
