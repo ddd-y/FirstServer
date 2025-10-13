@@ -20,6 +20,10 @@ void Handler::HandleRead()
 	if (bytes_read <= 0)
 	{
 		// error or connection closed by peer
+		if (!TheClientStateManager.IsClient(client_fd))
+			TheProcessPool->RemoveProcess(client_fd);
+		else
+			TheClientStateManager.RemoveClient(client_fd);
 		TheReactor->RemoveConnection(client_fd);
 		return;
 	}
@@ -32,11 +36,17 @@ void Handler::HandleRead()
 		case CLIENT_REQUEST[0]:
 			HandleCR(std::move(received_data));
 			break;
+		case CLIENT_FIND_ERROR[0]:
+			HandleFE(std::move(received_data));
+			break;
 		case SERVER_JOIN[0]:
 			HandleSJ(std::move(received_data));
 			break;
 		case SERVER_UPDATE[0]:
 			HandleSU(std::move(received_data));
+			break;
+		case SERVER_LEAVE[0]:
+			HandleSL(std::move(received_data));
 			break;
 		default:
 			HandleInvalid();
@@ -49,10 +59,15 @@ void Handler::HandleWrite()
 	if(TheClientStateManager.IsClient(client_fd))
 	{
 		LOG_DEBUG("Handling client request for fd {}", client_fd);
-		std::string TheIP = std::move(TheProcessPool->GetProcessIP());
+		std::string TheIP = TheProcessPool->GetProcessIP();
 		if (TheIP == "")
 		{
 			LOG_DEBUG("client request for fd {} failed to find the min process because there is no ready process", client_fd);
+			std::string NoServerMessage = "NoReadyServer";
+			write(client_fd, NoServerMessage.c_str(), NoServerMessage.size());
+			TheClientStateManager.RemoveClient(client_fd);
+			TheReactor->RemoveConnection(client_fd);
+			return;
 		}
 		write(client_fd, TheIP.c_str(), TheIP.size());
 		TheClientStateManager.RemoveClient(client_fd);
@@ -61,13 +76,16 @@ void Handler::HandleWrite()
 	else
 	{
 		//handle second type server write
+		std::string SuccessJoin = "SuccessJoin";
+		write(client_fd, SuccessJoin.c_str(), SuccessJoin.size());
+		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
 		return;
 	}
 }
 
 void Handler::HandleCR(std::string&& command)
 {
-	std::string new_command = std::move(command.substr(0,REQUEST_LENGTH));
+	std::string new_command = command.substr(0, REQUEST_LENGTH);
 	if (new_command == CLIENT_REQUEST)
 	{
 		//handle first type client read
@@ -80,29 +98,29 @@ void Handler::HandleCR(std::string&& command)
 
 void Handler::HandleSJ(std::string&& command)
 {
-	std::string new_command = std::move(command.substr(0, JOIN_LENGTH));
-	if (command == SERVER_JOIN)
+	std::string new_command = command.substr(0, JOIN_LENGTH);
+	if (new_command == SERVER_JOIN)
 	{
 		//handle second type server read
 		LOG_DEBUG("Second type server joining on fd {}", client_fd);
 		TheProcessPool->AddProcess(getMetaProcessByInfo(client_fd));
-		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
+		TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
 		return;
 	}
 }
 
 void Handler::HandleSU(std::string&& command)
 {
-	std::string new_command = std::move(command.substr(0, UPDATE_LENGTH));
-	if (command == SERVER_UPDATE)
+	std::string new_command = command.substr(0, UPDATE_LENGTH);
+	if (new_command == SERVER_UPDATE)
 	{
-		std::string num_str = std::move(command.substr(UPDATE_LENGTH));
+		std::string num_str = command.substr(UPDATE_LENGTH);
 		int num_read = num_str.size();
 		if (num_read <= 0)
 		{
 			return;
 		}
-		int ProcessID = getMetaProcessByInfo(client_fd).relatedfd;
+		int ProcessID = client_fd;
 		try
 		{
 			int update_load = std::stoi(num_str);
@@ -124,11 +142,34 @@ void Handler::HandleSU(std::string&& command)
 	}
 }
 
+void Handler::HandleSL(std::string&& command)
+{
+	std::string new_command = command.substr(0, LEAVE_LENGTH);
+	if(new_command==SERVER_LEAVE)
+	{
+		int ProcessID = client_fd;
+		TheProcessPool->RemoveProcess(ProcessID);
+		TheReactor->RemoveConnection(ProcessID);
+	}
+}
+
+void Handler::HandleFE(std::string&& command)
+{
+	std::string new_command = command.substr(0, FIND_ERROR_LENGTH);
+	if (new_command == CLIENT_FIND_ERROR)
+	{
+		std::string WrongIP = command.substr(FIND_ERROR_LENGTH);
+		//后边写一写通过IP来找连接的代码
+	}
+}
+
 void Handler::HandleInvalid()
 {
 	//处理未知命令
 	const std::string err_msg = "Invalid command";
 	write(client_fd, err_msg.c_str(), err_msg.size());
+	TheClientStateManager.RemoveClient(client_fd);
+	TheReactor->RemoveConnection(client_fd);
 }
 
 metaProcess Handler::getMetaProcessByInfo(int conn_fd)

@@ -30,12 +30,12 @@ public:
 	MyInternet();
 	void MainLoop();
 
-	void RemoveConnection(int fd)
+	void RemoveConnection(int fd) 
 	{
-		if (fd == -1) 
+		if (fd == -1)
 			return;
 		std::lock_guard<std::mutex> lock(epoll_mutex);
-		if(DisconnectList.find(fd) == DisconnectList.end())
+		if (DisconnectList.find(fd) == DisconnectList.end())
 			DisconnectList.insert(fd);
 	}
 };

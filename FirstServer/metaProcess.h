@@ -15,9 +15,11 @@ constexpr const int UPDATE_DURATION = 3;
 constexpr const double UPDATE_DURATION_MIN = 500.0;
 
 constexpr const double PRE_PERCENTAGE = 0.5;
+//预测算法：指数移动平均，类似于TCP的那个
 class metaProcess
 {
 public:
+	//上一次更新的时间
 	std::chrono::steady_clock::time_point LastUpdateTime;
 	int relatedfd;
 	std::string IP;
@@ -34,8 +36,8 @@ public:
 		LastUpdateTime= std::chrono::steady_clock::now();
 	}
 	metaProcess(metaProcess&& other) noexcept
-		: relatedfd(other.relatedfd), IP(std::move(other.IP)),
-		Port(other.Port),LastUpdateTime(std::move(other.LastUpdateTime)){
+		: LastUpdateTime(std::move(other.LastUpdateTime)),relatedfd(other.relatedfd), IP(std::move(other.IP)),
+		Port(other.Port){
 		other.relatedfd = -1;
 		other.Port = 0;
 		other.PredictLoad = 0.0;

@@ -5,6 +5,7 @@
 #include"ProcessPool.h"
 #include<unistd.h>
 #include"logger.h"
+#include"ClientStateManager.h"
 
 void MyInternet::ProcessDisconnections()
 {
@@ -101,3 +102,4 @@ void MyInternet::MainLoop()
 		}
 	}
 }
+
