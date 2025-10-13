@@ -34,19 +34,19 @@ void Handler::HandleRead()
 	switch (temp)
 	{
 		case CLIENT_REQUEST[0]:
-			HandleCR(std::move(received_data));
+			HandleCR(received_data);
 			break;
 		case CLIENT_FIND_ERROR[0]:
-			HandleFE(std::move(received_data));
+			HandleFE(received_data);
 			break;
 		case SERVER_JOIN[0]:
-			HandleSJ(std::move(received_data));
+			HandleSJ(received_data);
 			break;
 		case SERVER_UPDATE[0]:
-			HandleSU(std::move(received_data));
+			HandleSU(received_data);
 			break;
 		case SERVER_LEAVE[0]:
-			HandleSL(std::move(received_data));
+			HandleSL(received_data);
 			break;
 		default:
 			HandleInvalid();
@@ -83,7 +83,7 @@ void Handler::HandleWrite()
 	}
 }
 
-void Handler::HandleCR(std::string&& command)
+void Handler::HandleCR(std::string& command)
 {
 	std::string new_command = command.substr(0, REQUEST_LENGTH);
 	if (new_command == CLIENT_REQUEST)
@@ -96,7 +96,7 @@ void Handler::HandleCR(std::string&& command)
 	}
 }
 
-void Handler::HandleSJ(std::string&& command)
+void Handler::HandleSJ(std::string& command)
 {
 	std::string new_command = command.substr(0, JOIN_LENGTH);
 	if (new_command == SERVER_JOIN)
@@ -109,7 +109,7 @@ void Handler::HandleSJ(std::string&& command)
 	}
 }
 
-void Handler::HandleSU(std::string&& command)
+void Handler::HandleSU(std::string& command)
 {
 	std::string new_command = command.substr(0, UPDATE_LENGTH);
 	if (new_command == SERVER_UPDATE)
@@ -142,7 +142,7 @@ void Handler::HandleSU(std::string&& command)
 	}
 }
 
-void Handler::HandleSL(std::string&& command)
+void Handler::HandleSL(std::string& command)
 {
 	std::string new_command = command.substr(0, LEAVE_LENGTH);
 	if(new_command==SERVER_LEAVE)
@@ -153,7 +153,7 @@ void Handler::HandleSL(std::string&& command)
 	}
 }
 
-void Handler::HandleFE(std::string&& command)
+void Handler::HandleFE(std::string& command)
 {
 	std::string new_command = command.substr(0, FIND_ERROR_LENGTH);
 	if (new_command == CLIENT_FIND_ERROR)

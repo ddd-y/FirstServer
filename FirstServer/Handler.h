@@ -46,11 +46,11 @@ private:
 
 	//the son function of handleread
 
-	void HandleCR(std::string&& command);//handle client request
-	void HandleSJ(std::string&& command);//handle second type server join
-	void HandleSU(std::string&& command);//handle second type server update
-	void HandleSL(std::string&& command);//handle second type server leave when second type server exit
-	void HandleFE(std::string&& command);//handle second type server error found by client
+	void HandleCR(std::string& command);//handle client request
+	void HandleSJ(std::string& command);//handle second type server join
+	void HandleSU(std::string& command);//handle second type server update
+	void HandleSL(std::string& command);//handle second type server leave when second type server exit
+	void HandleFE(std::string& command);//handle second type server error found by client
 	void HandleInvalid();//handle invalid command
 
 public:
