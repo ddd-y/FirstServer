@@ -7,6 +7,8 @@ void metaProcess::addLoad(int newLoad)
     if (duration<UPDATE_DURATION_MIN) 
     {
         LastLoad = newLoad;
+        PredictLoad = newLoad;
+        PredictLoadChange = 0.0;
         LastUpdateTime = current_time;
         return;
     }
