@@ -7,6 +7,18 @@
 Acceptor::Acceptor(int port)
 {
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (listenfd == -1) 
+    {
+        LOG_ERROR("socket create error: {}", std::strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    int flags = fcntl(listenfd, F_GETFL, 0);
+    if (flags == -1 || fcntl(listenfd, F_SETFL, flags | O_NONBLOCK) == -1) 
+    {
+        LOG_ERROR("fcntl set listenfd nonblock error: {}", std::strerror(errno));
+        close(listenfd);
+        exit(EXIT_FAILURE);
+    }
     std::memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -21,12 +33,41 @@ void Acceptor::AcceptConnection(MyInternet* TheReactor)
 {
     sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
-    int connfd = accept(listenfd, (struct sockaddr*)&client_addr, &client_len);
-    if (connfd == -1)
+    while (true) 
     {
-        LOG_ERROR("Accept error: {}", std::strerror(errno)); // Ê¹ÓÃLOG_ERROR
-        return;
+        int connfd = accept(listenfd, (struct sockaddr*)&client_addr, &client_len);
+        if (connfd == -1) 
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) 
+            {
+                LOG_DEBUG("No more new connections to accept");
+                break;
+            }
+            else if (errno == EINTR) 
+            {
+                LOG_DEBUG("accept interrupted by signal, retrying");
+                continue;
+            }
+            else 
+            {
+                LOG_ERROR("Accept error: {}", std::strerror(errno));
+                break;
+            }
+        }
+        int flags = fcntl(connfd, F_GETFL, 0);
+        if (flags == -1) 
+        {
+            LOG_ERROR("fcntl get error for fd {}: {}", connfd, std::strerror(errno));
+            close(connfd);
+            continue; 
+        }
+        if (fcntl(connfd, F_SETFL, flags | O_NONBLOCK) == -1) 
+        {
+            LOG_ERROR("fcntl set nonblock error for fd {}: {}", connfd, std::strerror(errno));
+            close(connfd);
+            continue; 
+        }
+        TheReactor->registerEpoll(connfd, EPOLLIN | EPOLLET);
+        LOG_DEBUG("New connection accepted, fd: {}", connfd);
     }
-    // Register the new connection with epoll for read events
-	TheReactor->registerEpoll(connfd, EPOLLIN | EPOLLET);
 }

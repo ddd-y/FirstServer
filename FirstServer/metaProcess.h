@@ -3,7 +3,6 @@
 #include<string>
 #include<cstring>
 #include<arpa/inet.h>
-#include<array>
 #include<chrono>
 //Predict的最小精度
 constexpr const double MIN_PREDICT = 0.001;
