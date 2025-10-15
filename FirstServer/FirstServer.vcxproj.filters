@@ -36,6 +36,9 @@
     <ClInclude Include="ClientStateManager.h">
       <Filter>Head</Filter>
     </ClInclude>
+    <ClInclude Include="logger.h">
+      <Filter>Head</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyInternet.cpp">
@@ -58,6 +61,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="ClientStateManager.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="logger.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

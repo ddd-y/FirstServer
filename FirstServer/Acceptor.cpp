@@ -1,8 +1,8 @@
 #include "Acceptor.h"
 #include <sys/socket.h>
 #include<cstring>
-#include<arpa/inet.h>
 #include"MyInternet.h"
+#include"logger.h"
 
 Acceptor::Acceptor(int port)
 {
@@ -10,11 +10,11 @@ Acceptor::Acceptor(int port)
     std::memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    //inet_pton(AF_INET, "198.168.78.129", &server_addr.sin_addr);
     server_addr.sin_port = htons(port);
     bind(listenfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
     //start listening
     listen(listenfd, SOMAXCONN);
+	LOG_INFO("Server listening on port {}", port);
 }
 
 void Acceptor::AcceptConnection(MyInternet* TheReactor)
@@ -24,7 +24,7 @@ void Acceptor::AcceptConnection(MyInternet* TheReactor)
     int connfd = accept(listenfd, (struct sockaddr*)&client_addr, &client_len);
     if (connfd == -1)
     {
-        std::cerr << "Accept error: " << std::strerror(errno) << std::endl;
+        LOG_ERROR("Accept error: {}", std::strerror(errno)); // Ê¹ÓÃLOG_ERROR
         return;
     }
     // Register the new connection with epoll for read events

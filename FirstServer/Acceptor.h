@@ -12,3 +12,4 @@ public:
 	int GetListenFd() const { return listenfd; }
 	void AcceptConnection(MyInternet* TheReactor);
 };
+

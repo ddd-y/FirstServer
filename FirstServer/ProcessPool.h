@@ -7,6 +7,7 @@
 #include<mutex>
 #include<queue>
 
+constexpr const int COMPARE_NUM = 3;
 enum ProcessEvent
 {
 	PROCESS_ADDPOOL,
@@ -16,8 +17,6 @@ enum ProcessEvent
 class ProcessPool
 {
 private:
-	//total number of processes
-	int ProcessNum;
 	//used to store Valid processes
 	std::map<int, metaProcess*> ValidProcesses;
 

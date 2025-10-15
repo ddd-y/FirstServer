@@ -5,8 +5,7 @@
 #include"MyInternet.h"
 #include"metaProcess.h"
 #include"ThreadPool.h"
-
-//æ–°å¢ï¼šè¿›å…¥æ¯ä¸ªifæ³¨å†ŒReadäº‹ä»¶ ç¡®ä¿èƒ½æŒç»­read
+#include"logger.h"
 
 void Handler::HandleRead()
 {
@@ -21,104 +20,156 @@ void Handler::HandleRead()
 	if (bytes_read <= 0)
 	{
 		// error or connection closed by peer
+		if (!TheClientStateManager.IsClient(client_fd))
+			TheProcessPool->RemoveProcess(client_fd);
+		else
+			TheClientStateManager.RemoveClient(client_fd);
 		TheReactor->RemoveConnection(client_fd);
 		return;
 	}
 	buffer[bytes_read] = '\0';  // be sure to null-terminate
 	std::string received_data(buffer, bytes_read);
-	std::string command;
 
-
-	//è§£å†³ä¸€ä¸‹ä¸åŒå‘½ä»¤çš„åˆ‡å‰²é—®é¢˜
-	switch (received_data[0])
+	char temp = received_data[0];
+	switch (temp)
 	{
-	case  'J':
-		command = std::move(received_data.substr(0, 4));
-		break;
-	case 'U':
-		command = std::move(received_data.substr(0, 6));
-		break;
-	case 'R':
-		command = std::move(received_data.substr(0, 7));
-		break;
-	default:
-		break;
+		case CLIENT_REQUEST[0]:
+			HandleCR(received_data);
+			break;
+		case CLIENT_FIND_ERROR[0]:
+			HandleFE(received_data);
+			break;
+		case SERVER_JOIN[0]:
+			HandleSJ(received_data);
+			break;
+		case SERVER_UPDATE[0]:
+			HandleSU(received_data);
+			break;
+		case SERVER_LEAVE[0]:
+			HandleSL(received_data);
+			break;
+		default:
+			HandleInvalid();
+			break;
 	}
-	//
-
-	
-	if (command == CLIENT_REQUEST)
-	{	
-		
-		TheClientStateManager.AddClient(client_fd);
-		TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
-		return;
-	}
-
-	
-	if (command == SERVER_JOIN)
-	{
-
-		//handle second type server read
-		TheProcessPool->AddProcess(getMetaProcessByInfo(client_fd));
-		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
-		return;
-	}
-
-	
-	if (command == SERVER_UPDATE)
-	{
-		//è¿™ä¸ªåè®®å¯èƒ½è¿˜å¾—æ”¹ä¸€ä¸‹
-		
-		std::string num_str = received_data.substr(6);
-		int num_read = num_str.size();
-		if (num_read <= 0)
-		{
-			return;
-		}
-
-		try
-		{
-			int ProcessID = getMetaProcessByInfo(client_fd).relatedfd;
-			int update_load = std::stoi(num_str);
-			TheProcessPool->UpDateProcessState(ProcessID, update_load);
-		}
-		catch (const std::invalid_argument&)
-		{
-			// éæ³•æ•°å­—æ ¼å¼
-		}
-		catch (const std::out_of_range&)
-		{
-			// æ•°å­—è¶…å‡ºèŒƒå›´
-		}
-
-		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
-		return;
-	}
-
-
-	//å¤„ç†æœªçŸ¥å‘½ä»¤
-	const std::string err_msg = "Invalid command";
-	std::cout << err_msg << std::endl;
-	write(client_fd, err_msg.c_str(), err_msg.size());
-	
 }
 
 void Handler::HandleWrite()
 {
 	if(TheClientStateManager.IsClient(client_fd))
 	{
-		std::string TheIP = std::move(TheProcessPool->GetProcessIP());
+		LOG_DEBUG("Handling client request for fd {}", client_fd);
+		std::string TheIP = TheProcessPool->GetProcessIP();
+		if (TheIP == "")
+		{
+			LOG_DEBUG("client request for fd {} failed to find the min process because there is no ready process", client_fd);
+			std::string NoServerMessage = "NoReadyServer";
+			write(client_fd, NoServerMessage.c_str(), NoServerMessage.size());
+			TheClientStateManager.RemoveClient(client_fd);
+			TheReactor->RemoveConnection(client_fd);
+			return;
+		}
 		write(client_fd, TheIP.c_str(), TheIP.size());
 		TheClientStateManager.RemoveClient(client_fd);
 		TheReactor->RemoveConnection(client_fd);
-		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
 	}
 	else
 	{
 		//handle second type server write
+		std::string SuccessJoin = "SuccessJoin";
+		write(client_fd, SuccessJoin.c_str(), SuccessJoin.size());
+		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
 		return;
 	}
+}
+
+void Handler::HandleCR(std::string& command)
+{
+	std::string new_command = command.substr(0, REQUEST_LENGTH);
+	if (new_command == CLIENT_REQUEST)
+	{
+		//handle first type client read
+		LOG_DEBUG("Received client request on fd {}", client_fd);
+		TheClientStateManager.AddClient(client_fd);
+		TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
+		return;
+	}
+}
+
+void Handler::HandleSJ(std::string& command)
+{
+	std::string new_command = command.substr(0, JOIN_LENGTH);
+	if (new_command == SERVER_JOIN)
+	{
+		//handle second type server read
+		LOG_DEBUG("Second type server joining on fd {}", client_fd);
+		TheProcessPool->AddProcess(getMetaProcessByInfo(client_fd));
+		TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
+		return;
+	}
+}
+
+void Handler::HandleSU(std::string& command)
+{
+	std::string new_command = command.substr(0, UPDATE_LENGTH);
+	if (new_command == SERVER_UPDATE)
+	{
+		std::string num_str = command.substr(UPDATE_LENGTH);
+		int num_read = num_str.size();
+		if (num_read <= 0)
+		{
+			return;
+		}
+		int ProcessID = client_fd;
+		try
+		{
+			int update_load = std::stoi(num_str);
+			LOG_DEBUG("Updating process load: fd {}, new load {}", ProcessID, update_load);
+			TheProcessPool->UpDateProcessState(ProcessID, update_load);
+			TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
+		}
+		catch (const std::invalid_argument&)
+		{
+			// ·Ç·¨Êı×Ö¸ñÊ½
+			LOG_DEBUG("Updating process load: fd {}, because of invalid argument", ProcessID);
+		}
+		catch (const std::out_of_range&)
+		{
+			// Êı×Ö³¬³ö·¶Î§
+			LOG_DEBUG("Updating process load: fd {}, because of the number out of range", ProcessID);
+		}
+		return;
+	}
+}
+
+void Handler::HandleSL(std::string& command)
+{
+	std::string new_command = command.substr(0, LEAVE_LENGTH);
+	if(new_command==SERVER_LEAVE)
+	{
+		int ProcessID = client_fd;
+		TheProcessPool->RemoveProcess(ProcessID);
+		TheReactor->RemoveConnection(ProcessID);
+	}
+}
+
+void Handler::HandleFE(std::string& command)
+{
+	std::string new_command = command.substr(0, FIND_ERROR_LENGTH);
+	if (new_command == CLIENT_FIND_ERROR)
+	{
+		std::string WrongIP = command.substr(FIND_ERROR_LENGTH);
+		//ºó±ßĞ´Ò»Ğ´Í¨¹ıIPÀ´ÕÒÁ¬½ÓµÄ´úÂë
+	}
+}
+
+void Handler::HandleInvalid()
+{
+	//´¦ÀíÎ´ÖªÃüÁî
+	const std::string err_msg = "Invalid command";
+	write(client_fd, err_msg.c_str(), err_msg.size());
+	TheClientStateManager.RemoveClient(client_fd);
+	TheReactor->RemoveConnection(client_fd);
 }
 
 metaProcess Handler::getMetaProcessByInfo(int conn_fd)
@@ -136,8 +187,9 @@ metaProcess Handler::getMetaProcessByInfo(int conn_fd)
 	return metaProcess(conn_fd, peer_ip, peer_port);
 }
 
-Handler::Handler(int fd, HandlerState TheState, MyInternet* NewReactor,ThreadPool* NewThreadPool,ProcessPool* NewProcessPool) :client_fd(fd)
-, TaskState(TheState), TheReactor(NewReactor),TheThreadPool(NewThreadPool), TheProcessPool(NewProcessPool)
+Handler::Handler(int fd, HandlerState TheState, MyInternet* NewReactor,ThreadPool* NewThreadPool, 
+	ProcessPool* NewProcessPool) :client_fd(fd), TheProcessPool(NewProcessPool)
+, TaskState(TheState), TheReactor(NewReactor),TheThreadPool(NewThreadPool)
 {
 	if (TaskState == READING)
 	{

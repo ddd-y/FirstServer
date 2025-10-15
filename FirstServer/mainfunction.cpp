@@ -2,20 +2,12 @@
 #include"ProcessPool.h"
 #include"MyInternet.h"
 #include"ThreadPool.h"
-#include<iostream>
-
+#include"logger.h"
 ClientStateManager Handler::TheClientStateManager;
 int main() 
-{   
-   
-    ProcessPool *processPool=new  ProcessPool();
+{
+    init_logger("logs/FirstServer.log", spdlog::level::debug);
 	MyInternet* internet = new MyInternet();
-    std::cout << "start successfully----------------" << std::endl;
-    std::cout << "running-------" << std::endl;
     internet->MainLoop(); // 启动事件循环
-
-    std::cout << "server close...." << std::endl;
-   
-  
     return 0;
 }

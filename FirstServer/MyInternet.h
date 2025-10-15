@@ -16,13 +16,13 @@ class ProcessPool;
 class MyInternet
 {
 private:
-	int epollfd;
-	Acceptor* TheAcceptor;
-
 	std::mutex epoll_mutex;
 	std::set<int> DisconnectList;
+
+	Acceptor* TheAcceptor;
 	ThreadPool* TheThreadPool;
 	ProcessPool* TheProcessPool;
+	int epollfd;
 	void ProcessDisconnections();
 public:
 	void registerEpoll(int fd, uint32_t events);
@@ -30,12 +30,13 @@ public:
 	MyInternet();
 	void MainLoop();
 
-	void RemoveConnection(int fd)
+	void RemoveConnection(int fd) 
 	{
-		if (fd == -1) 
+		if (fd == -1)
 			return;
 		std::lock_guard<std::mutex> lock(epoll_mutex);
-		if(DisconnectList.find(fd) == DisconnectList.end())
+		if (DisconnectList.find(fd) == DisconnectList.end())
 			DisconnectList.insert(fd);
 	}
 };
+

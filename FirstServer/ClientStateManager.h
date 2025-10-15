@@ -18,7 +18,8 @@ public:
 	}
 	void RemoveClient(int id) 
 	{
-		ClientIDs.erase(id);
+		if (ClientIDs.find(id) != ClientIDs.end())
+			ClientIDs.erase(id);
 	}
 };
 
