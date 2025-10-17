@@ -101,6 +101,32 @@ ThreadPool::~ThreadPool()
             t.join(); 
         }
     }
+    {
+        std::lock_guard<std::mutex> lock(ActiveLock);
+        for (auto handler : ActiveHandler)
+        {
+            delete handler;
+        }
+        ActiveHandler.clear();
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(NotComLock);
+        for (auto& pair : NotComHandlers)
+        {
+            delete pair.second;
+        }
+        NotComHandlers.clear();
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(DeleteLock);
+        for (auto handler : DeleteHandlers)
+        {
+            delete handler;
+        }
+        DeleteHandlers.clear();
+    }
 }
 
 
