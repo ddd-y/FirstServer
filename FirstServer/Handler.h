@@ -72,7 +72,7 @@ public:
 	//use to know the exact logic of the handler
 	static ClientStateManager TheClientStateManager;
 
-	Handler(int fd, HandlerState TheState, ProcessPool* NewProcessPool, MyInternet* NewReactor);
+	Handler(int fd, HandlerState TheState);
 	bool Handle();
 	//处理时间是否过长
 	bool IfTooLong(std::chrono::steady_clock::time_point& current_time);

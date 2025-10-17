@@ -21,6 +21,7 @@ void MyInternet::ProcessDisconnections()
 	DisconnectList.clear();
 }
 
+
 void MyInternet::registerEpoll(int fd, uint32_t events)
 {
     epoll_event ev;
@@ -47,11 +48,12 @@ void MyInternet::modifyEpoll(int fd, uint32_t events)
 	}
 }
 
+
 MyInternet::MyInternet()
 {
 	TheAcceptor = new Acceptor(FIRST_PORT);
-	TheThreadPool = new ThreadPool();
-	TheProcessPool = new ProcessPool(this);
+	TheThreadPool = ThreadPool::getInstance();
+	TheProcessPool = ProcessPool::getInstance();
 	epollfd = epoll_create1(EPOLL_CLOEXEC);
 	if (epollfd == -1)
 	{
@@ -94,11 +96,11 @@ void MyInternet::MainLoop()
 			}
 			else if (events[i].events & EPOLLIN)
 			{
-				TheThreadPool->RunHandler(fd, true, TheProcessPool,this);
+				TheThreadPool->RunHandler(fd, true);
 			}
 			else if(events[i].events & EPOLLOUT)
 			{
-				TheThreadPool->RunHandler(fd, false, TheProcessPool,this);
+				TheThreadPool->RunHandler(fd, false);
 			}
 		}
 	}

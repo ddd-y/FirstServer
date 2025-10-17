@@ -295,9 +295,11 @@ metaProcess Handler::getMetaProcessByInfo(int conn_fd)
 }
 
 
-Handler::Handler(int fd, HandlerState TheState, ProcessPool* NewProcessPool, MyInternet* NewReactor):
-	LastHandleTime(std::chrono::steady_clock::now()), IncompleteMes(""), client_fd(fd), TaskState(TheState), TheProcessPool(NewProcessPool),
-	TheReactor(NewReactor)
+
+Handler::Handler(int fd, HandlerState TheState):
+	LastHandleTime(std::chrono::steady_clock::now()), IncompleteMes(""), client_fd(fd), TaskState(TheState), 
+	TheProcessPool(ProcessPool::getInstance()),
+    TheReactor(MyInternet::getInstance())
 {
 	if (TaskState == READING)
 	{
@@ -308,7 +310,6 @@ Handler::Handler(int fd, HandlerState TheState, ProcessPool* NewProcessPool, MyI
 		CurrentHandle = &Handler::HandleWrite;
 	}
 }
-
 
 bool Handler::Handle()
 {

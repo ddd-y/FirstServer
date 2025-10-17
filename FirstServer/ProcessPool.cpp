@@ -28,10 +28,12 @@ void ProcessPool::RemoveProcess_private(int ProcessID)
 		ProcessQueue.erase(proc);
 		ValidProcesses.erase(it);
 		IPMap.erase(proc->IP);
+		MyInternet* Reactor = MyInternet::getInstance();
 		Reactor->RemoveConnection(proc->relatedfd);
 		delete proc;
 	}
 }
+
 void ProcessPool::AddProcess(metaProcess&& NewProcess)
 {
 	if(NewProcess.relatedfd == -1 || NewProcess.IP.empty() || NewProcess.Port == 0)
@@ -94,7 +96,4 @@ std::string ProcessPool::GetProcessIP() const
 	return (*it)->IP;
 }
 
-ProcessPool::ProcessPool(MyInternet* new_Reactor):Reactor(new_Reactor)
-{
-}
 
