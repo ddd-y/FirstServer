@@ -7,80 +7,150 @@
 #include"ThreadPool.h"
 #include"logger.h"
 
-void Handler::HandleRead()
+bool Handler::HandleRead()
 {
+	LastHandleTime = std::chrono::steady_clock::now();
+	std::string received_data=IncompleteMes;
 	char buffer[1024];
-	ssize_t bytes_read;
-	do 
+	while (true) 
 	{
-		bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
-	} 
-	while (bytes_read == -1 && errno == EINTR); 
-
-	if (bytes_read <= 0)
-	{
-		// error or connection closed by peer
-		if (!TheClientStateManager.IsClient(client_fd))
-			TheProcessPool->RemoveProcess(client_fd);
-		else
-			TheClientStateManager.RemoveClient(client_fd);
-		TheReactor->RemoveConnection(client_fd);
-		return;
+		ssize_t bytes_read= read(client_fd, buffer, sizeof(buffer) - 1);
+		if (bytes_read == -1)
+		{
+			if (errno == EINTR) 
+			{
+				continue;
+			}
+			else if (errno == EAGAIN || errno == EWOULDBLOCK) 
+			{
+				break;
+			}
+			else 
+			{
+				LOG_ERROR("Read error for fd {}: {}", client_fd, std::strerror(errno));
+				CleanupConnection();
+				return true;
+			}
+		}
+		else if (bytes_read == 0)
+		{
+			// 客户端关闭连接且未发送 ";"，视为无效消息
+			LOG_WARN("Client fd {} closed without '.'", client_fd);
+			CleanupConnection();
+			return true;
+		}
+		received_data.append(buffer, bytes_read);
+		size_t semicolon_pos = received_data.find(PARTITION_CHAR);
+		if (semicolon_pos != std::string::npos)
+		{
+			std::string complete_msg = received_data.substr(0, semicolon_pos + 1);
+			HandleCompleteMes(complete_msg);
+			return true;
+		}
 	}
-	buffer[bytes_read] = '\0';  // be sure to null-terminate
-	std::string received_data(buffer, bytes_read);
-
-	char temp = received_data[0];
-	switch (temp)
+	if (!received_data.empty()) 
 	{
-		case CLIENT_REQUEST[0]:
-			HandleCR(received_data);
-			break;
-		case CLIENT_FIND_ERROR[0]:
-			HandleFE(received_data);
-			break;
-		case SERVER_JOIN[0]:
-			HandleSJ(received_data);
-			break;
-		case SERVER_UPDATE[0]:
-			HandleSU(received_data);
-			break;
-		case SERVER_LEAVE[0]:
-			HandleSL(received_data);
-			break;
-		default:
-			HandleInvalid();
-			break;
+		if (received_data.size() >= MAX_INCOMPMES_SIZE)
+		{
+			LOG_DEBUG("Incomplete message for fd {}, is too large", client_fd);
+		}
+		IncompleteMes = received_data;
+		LOG_DEBUG("Incomplete message for fd {}, waiting for more data", client_fd);
+		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
+		return false;
 	}
+	else 
+	{
+		LOG_WARN("No data received for fd {}", client_fd);
+		CleanupConnection();
+		return true;
+	}
+	return true;
 }
 
-void Handler::HandleWrite()
+bool Handler::HandleWrite()
 {
-	if(TheClientStateManager.IsClient(client_fd))
+	LastHandleTime = std::chrono::steady_clock::now();
+	std::string data_to_write;
+
+	// 优先处理未完成的写数据
+	if (!IncompleteMes.empty()) 
 	{
-		LOG_DEBUG("Handling client request for fd {}", client_fd);
-		std::string TheIP = TheProcessPool->GetProcessIP();
-		if (TheIP == "")
+		data_to_write = IncompleteMes;
+		IncompleteMes.clear();
+	}
+	else 
+	{
+		// 根据客户端类型准备要发送的数据
+		if (TheClientStateManager.IsClient(client_fd)) 
 		{
-			LOG_DEBUG("client request for fd {} failed to find the min process because there is no ready process", client_fd);
-			std::string NoServerMessage = "NoReadyServer";
-			write(client_fd, NoServerMessage.c_str(), NoServerMessage.size());
-			TheClientStateManager.RemoveClient(client_fd);
-			TheReactor->RemoveConnection(client_fd);
-			return;
+			LOG_DEBUG("Handling client request for fd {}", client_fd);
+			std::string TheIP = TheProcessPool->GetProcessIP();
+			if (TheIP.empty()) 
+			{
+				LOG_DEBUG("client request for fd {} failed: no ready process", client_fd);
+				data_to_write = "NoReadyServer";
+			}
+			else 
+			{
+				data_to_write = TheIP;
+			}
 		}
-		write(client_fd, TheIP.c_str(), TheIP.size());
-		TheClientStateManager.RemoveClient(client_fd);
-		TheReactor->RemoveConnection(client_fd);
+		else 
+		{
+			// 服务器类型连接：发送加入成功消息
+			data_to_write = "SuccessJoin";
+		}
 	}
-	else
+	// 执行写操作
+	ssize_t total_written = 0;
+	const char* buffer = data_to_write.c_str();
+	size_t remaining = data_to_write.size();
+	while (remaining > 0) 
 	{
-		//handle second type server write
-		std::string SuccessJoin = "SuccessJoin";
-		write(client_fd, SuccessJoin.c_str(), SuccessJoin.size());
-		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
-		return;
+		ssize_t bytes_written = write(client_fd, buffer + total_written, remaining);
+		if (bytes_written == -1) 
+		{
+			if (errno == EINTR) 
+			{
+				// 被信号中断，重试
+				continue;
+			}
+			else if (errno == EAGAIN || errno == EWOULDBLOCK) 
+			{
+				// 内核缓冲区满，保存未写完的数据，等待下次EPOLLOUT事件
+				IncompleteMes = data_to_write.substr(total_written);
+				LOG_DEBUG("Partial write for fd {}, remaining: {} bytes", client_fd, remaining);
+				TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
+				return false; // 未完成，保留handler
+			}
+			else 
+			{
+				LOG_ERROR("Write error for fd {}: {}", client_fd, std::strerror(errno));
+				CleanupConnection();
+				return true;
+			}
+		}
+		else if (bytes_written == 0) 
+		{
+			LOG_WARN("Client fd {} closed during write", client_fd);
+			CleanupConnection();
+			return true;
+		}
+
+		total_written += bytes_written;
+		remaining -= bytes_written;
 	}
+	//handle之后的处理
+	if (TheClientStateManager.IsClient(client_fd)) 
+	{
+		CleanupConnection();
+	}
+	else 
+	{
+		TheReactor->modifyEpoll(client_fd, EPOLLIN | EPOLLET);
+	}
+	return true;
 }
 
 void Handler::HandleCR(std::string& command)
@@ -160,6 +230,7 @@ void Handler::HandleFE(std::string& command)
 	{
 		std::string WrongIP = command.substr(FIND_ERROR_LENGTH);
 		//后边写一写通过IP来找连接的代码
+		TheProcessPool->HandleClientError(WrongIP);
 	}
 }
 
@@ -170,6 +241,42 @@ void Handler::HandleInvalid()
 	write(client_fd, err_msg.c_str(), err_msg.size());
 	TheClientStateManager.RemoveClient(client_fd);
 	TheReactor->RemoveConnection(client_fd);
+}
+
+void Handler::CleanupConnection()
+{
+	LOG_DEBUG("Cleaning up connection fd: {}", client_fd);
+	if (!TheClientStateManager.IsClient(client_fd))
+		TheProcessPool->RemoveProcess(client_fd);
+	else
+		TheClientStateManager.RemoveClient(client_fd);
+	TheReactor->RemoveConnection(client_fd);
+}
+
+void Handler::HandleCompleteMes(std::string& command)
+{
+	char temp = command[0];
+	switch (temp)
+	{
+	case CLIENT_REQUEST[0]:
+		HandleCR(command);
+		break;
+	case CLIENT_FIND_ERROR[0]:
+		HandleFE(command);
+		break;
+	case SERVER_JOIN[0]:
+		HandleSJ(command);
+		break;
+	case SERVER_UPDATE[0]:
+		HandleSU(command);
+		break;
+	case SERVER_LEAVE[0]:
+		HandleSL(command);
+		break;
+	default:
+		HandleInvalid();
+		break;
+	}
 }
 
 metaProcess Handler::getMetaProcessByInfo(int conn_fd)
@@ -187,9 +294,10 @@ metaProcess Handler::getMetaProcessByInfo(int conn_fd)
 	return metaProcess(conn_fd, peer_ip, peer_port);
 }
 
-Handler::Handler(int fd, HandlerState TheState, MyInternet* NewReactor,ThreadPool* NewThreadPool, 
-	ProcessPool* NewProcessPool) :client_fd(fd), TheProcessPool(NewProcessPool)
-, TaskState(TheState), TheReactor(NewReactor),TheThreadPool(NewThreadPool)
+
+Handler::Handler(int fd, HandlerState TheState, ProcessPool* NewProcessPool, MyInternet* NewReactor):
+	LastHandleTime(std::chrono::steady_clock::now()), IncompleteMes(""), client_fd(fd), TaskState(TheState), TheProcessPool(NewProcessPool),
+	TheReactor(NewReactor)
 {
 	if (TaskState == READING)
 	{
@@ -201,12 +309,16 @@ Handler::Handler(int fd, HandlerState TheState, MyInternet* NewReactor,ThreadPoo
 	}
 }
 
-void Handler::StartThread()
+
+bool Handler::Handle()
 {
-	TheThreadPool->AddTask(TaskData{ client_fd,this });
+	bool result=(this->*CurrentHandle)();
+	return result;
 }
 
-void Handler::Handle()
+bool Handler::IfTooLong(std::chrono::steady_clock::time_point& current_time)
 {
-	(this->*CurrentHandle)();
+	auto duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - LastHandleTime);
+	return duration.count() > MAX_LIFE;
 }
+

@@ -4,15 +4,10 @@ void metaProcess::addLoad(int newLoad)
 {
     std::chrono::steady_clock::time_point current_time = std::chrono::steady_clock::now();
     double duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - LastUpdateTime).count();
-    if (duration<UPDATE_DURATION_MIN) 
-    {
-        LastLoad = newLoad;
-        PredictLoad = newLoad;
-        PredictLoadChange = 0.0;
-        LastUpdateTime = current_time;
-        return;
-    }
     LastUpdateTime = current_time;
+    //简单处理一下网络拥塞
+    if (duration < UPDATE_DURATION_MIN)
+        duration *= 2.0;
     double sub_Load = newLoad - LastLoad;
     LastLoad = newLoad;
     PredictLoadChange = sub_Load / duration * PRE_PERCENTAGE * 1000.0 + PredictLoadChange * (1.0- PRE_PERCENTAGE);

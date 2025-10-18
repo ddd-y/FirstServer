@@ -3,21 +3,23 @@
 #include<cstring>
 #include<iostream>
 #include <sys/epoll.h>
-#include<vector>
 #include<mutex>
 #include<set>	
+#include<condition_variable>
 
 constexpr int FIRST_PORT = 8080;
 constexpr int MAX_EVENTS = 1024;
 class Acceptor;
 class ThreadPool;
 class ProcessPool;
+class Handler;
 // Manages network connections and epoll instance
 class MyInternet
 {
 private:
 	std::mutex epoll_mutex;
 	std::set<int> DisconnectList;
+
 
 	Acceptor* TheAcceptor;
 	ThreadPool* TheThreadPool;
@@ -29,7 +31,6 @@ public:
 	void modifyEpoll(int fd, uint32_t events);
 	MyInternet();
 	void MainLoop();
-
 	void RemoveConnection(int fd) 
 	{
 		if (fd == -1)

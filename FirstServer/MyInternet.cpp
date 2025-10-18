@@ -20,6 +20,7 @@ void MyInternet::ProcessDisconnections()
 	}
 	DisconnectList.clear();
 }
+
 void MyInternet::registerEpoll(int fd, uint32_t events)
 {
     epoll_event ev;
@@ -29,6 +30,7 @@ void MyInternet::registerEpoll(int fd, uint32_t events)
 	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1)
 	{
 		LOG_ERROR("Failed to add fd {} to epoll: {}", fd, std::strerror(errno));
+		close(fd);
 	}
 }
 
@@ -49,7 +51,7 @@ MyInternet::MyInternet()
 {
 	TheAcceptor = new Acceptor(FIRST_PORT);
 	TheThreadPool = new ThreadPool();
-	TheProcessPool = new ProcessPool();
+	TheProcessPool = new ProcessPool(this);
 	epollfd = epoll_create1(EPOLL_CLOEXEC);
 	if (epollfd == -1)
 	{
@@ -64,6 +66,7 @@ void MyInternet::MainLoop()
 	epoll_event events[MAX_EVENTS];
 	while(true)
 	{
+		TheThreadPool->pDeleteHandler();
 		ProcessDisconnections();
 		int ready_fds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 		if (ready_fds == -1)
@@ -76,30 +79,29 @@ void MyInternet::MainLoop()
 		for(int i=0;i<ready_fds;++i)
 		{
 			int fd = events[i].data.fd;
-			epoll_mutex.lock();
-			if(DisconnectList.find(fd) != DisconnectList.end())
+			bool is_disconnected = false;
 			{
-				// Skip processing for this fd
-				continue; 
+				std::lock_guard<std::mutex> lock(epoll_mutex);
+				is_disconnected = (DisconnectList.find(fd) != DisconnectList.end());
 			}
-			epoll_mutex.unlock();
+			if (is_disconnected)
+			{
+				continue;
+			}
 			if(fd==TheAcceptor->GetListenFd())
 			{
 				TheAcceptor->AcceptConnection(this);
 			}
 			else if (events[i].events & EPOLLIN)
 			{
-				//Handle read event
-				Handler* NewHandler = new Handler(fd, READING, this,TheThreadPool,TheProcessPool);
-				NewHandler->StartThread();
+				TheThreadPool->RunHandler(fd, true, TheProcessPool,this);
 			}
 			else if(events[i].events & EPOLLOUT)
 			{
-				//Handle write event
-				Handler* NewHandler = new Handler(fd, WRITING, this,TheThreadPool,TheProcessPool);
-				NewHandler->StartThread();
+				TheThreadPool->RunHandler(fd, false, TheProcessPool,this);
 			}
 		}
 	}
 }
+
 
