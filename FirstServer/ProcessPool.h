@@ -29,8 +29,14 @@ private:
 	std::set<int> SuspiciousProcess;
 	void HandleSuspicious(int ProcessID);
 	void RemoveProcess_private(int ProcessID);
-	MyInternet* Reactor=nullptr;
+
+	ProcessPool()=default;
+	static ProcessPool instance;
 public:
+	static ProcessPool* getInstance()
+	{
+		return &instance;
+	}
 	//add a new process to the pool
 	void AddProcess(metaProcess&& NewProcess);
 	void UpDateProcessState(int ProcessID, int NewLoad);
@@ -38,6 +44,5 @@ public:
 	void HandleClientError(std::string& TheIP);
 	//choose the process with the least load
 	std::string GetProcessIP() const;
-	ProcessPool(MyInternet* new_Reactor);
 };
 

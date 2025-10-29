@@ -17,8 +17,6 @@ class MyInternet;
 struct TaskData
 {
 	int client_id; 
-	ProcessPool* tProcessPool;
-	MyInternet* tReactor;
 	bool readorwrite;
 };
 class ThreadPool
@@ -42,11 +40,17 @@ private:
 	std::atomic<bool> stop = false;
 	void CleanOverTime();
 	void AddDelete(Handler* delete_handler);
+	ThreadPool();
+
+	static ThreadPool instance;
 public:
+	static ThreadPool* getInstance()
+	{
+		return &instance;
+	}
 	//use to add task
 	void pDeleteHandler();
-	void RunHandler(int fd,bool readorwrite,ProcessPool* tprocesspool, MyInternet* newReactor);
-	ThreadPool();
+	void RunHandler(int fd,bool readorwrite);
 	~ThreadPool();
 	// Each thread runs this function
 	void ThreadRun();

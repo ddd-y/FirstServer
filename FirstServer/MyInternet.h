@@ -26,10 +26,24 @@ private:
 	ProcessPool* TheProcessPool;
 	int epollfd;
 	void ProcessDisconnections();
+	MyInternet();
+	static bool IfInited;
+	static MyInternet *instance;
 public:
+	static MyInternet* getInstance()
+	{
+		return instance;
+	}
+	static void Init()
+	{
+		if (!IfInited)
+		{
+			instance = new MyInternet();
+			IfInited = true;
+		}
+	}
 	void registerEpoll(int fd, uint32_t events);
 	void modifyEpoll(int fd, uint32_t events);
-	MyInternet();
 	void MainLoop();
 	void RemoveConnection(int fd) 
 	{

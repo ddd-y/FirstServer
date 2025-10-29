@@ -13,7 +13,7 @@ constexpr const int UPDATE_DURATION = 3;
 //当间隔时间小于这个值的时候，不拿来算变化率，防止变化的跳跃
 constexpr const double UPDATE_DURATION_MIN = 500.0;
 
-constexpr const double PRE_PERCENTAGE = 0.5;
+constexpr const double PRE_PERCENTAGE = 0.25;
 //预测算法：指数移动平均，类似于TCP的那个
 class metaProcess
 {
