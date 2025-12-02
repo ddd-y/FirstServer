@@ -58,7 +58,6 @@ MyInternet::MyInternet()
 	if (epollfd == -1)
 	{
 		LOG_ERROR("Failed to create epoll instance: {}", std::strerror(errno));
-		exit(EXIT_FAILURE);
 	}
 	registerEpoll(TheAcceptor->GetListenFd(), EPOLLIN);
 }

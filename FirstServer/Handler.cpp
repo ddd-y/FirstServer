@@ -174,6 +174,8 @@ void Handler::HandleSJ(std::string& command)
 		//handle second type server read
 		LOG_DEBUG("Second type server joining on fd {}", client_fd);
 		TheProcessPool->AddProcess(getMetaProcessByInfo(client_fd));
+		LOG_DEBUG("Server Join IP:{}", TheProcessPool->GetProcessIP());
+
 		TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
 		return;
 	}

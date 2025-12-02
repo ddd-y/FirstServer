@@ -38,6 +38,7 @@ FMT_BEGIN_NAMESPACE
 // Copyright Paul Dreik 2019
 namespace safe_duration_cast {
 
+// DEPRECATED!
 template <typename To, typename From,
           FMT_ENABLE_IF(!std::is_same<From, To>::value &&
                         std::numeric_limits<From>::is_signed ==
@@ -326,7 +327,7 @@ inline auto get_classic_locale() -> const std::locale& {
 }
 
 template <typename CodeUnit> struct codecvt_result {
-  static constexpr const size_t max_size = 32;
+  static constexpr size_t max_size = 32;
   CodeUnit buf[max_size];
   CodeUnit* end;
 };
@@ -443,11 +444,7 @@ auto duration_cast(std::chrono::duration<FromRep, FromPeriod> from) -> To {
 
   using common_rep = typename std::common_type<FromRep, typename To::rep,
                                                decltype(factor::num)>::type;
-
-  int ec = 0;
-  auto count = safe_duration_cast::lossless_integral_conversion<common_rep>(
-      from.count(), ec);
-  if (ec) throw_duration_error();
+  common_rep count = from.count();  // This conversion is lossless.
 
   // Multiply from.count() by factor and check for overflow.
   if (const_check(factor::num != 1)) {
@@ -458,6 +455,7 @@ auto duration_cast(std::chrono::duration<FromRep, FromPeriod> from) -> To {
     count *= factor::num;
   }
   if (const_check(factor::den != 1)) count /= factor::den;
+  int ec = 0;
   auto to =
       To(safe_duration_cast::lossless_integral_conversion<typename To::rep>(
           count, ec));
@@ -471,6 +469,8 @@ template <typename To, typename FromRep, typename FromPeriod,
                             std::is_floating_point<typename To::rep>::value)>
 auto duration_cast(std::chrono::duration<FromRep, FromPeriod> from) -> To {
 #if FMT_SAFE_DURATION_CAST
+  // Preserve infinity and NaN.
+  if (!isfinite(from.count())) return static_cast<To>(from.count());
   // Throwing version of safe_duration_cast is only available for
   // integer to integer or float to float casts.
   int ec;
@@ -487,7 +487,7 @@ template <typename To, typename FromRep, typename FromPeriod,
           FMT_ENABLE_IF(
               !is_similar_arithmetic_type<FromRep, typename To::rep>::value)>
 auto duration_cast(std::chrono::duration<FromRep, FromPeriod> from) -> To {
-  // Mixed integer <-> float cast is not supported by safe_duration_cast.
+  // Mixed integer <-> float cast is not supported by safe duration_cast.
   return std::chrono::duration_cast<To>(from);
 }
 
@@ -652,7 +652,7 @@ inline void write_digit2_separated(char* buf, unsigned a, unsigned b,
   // Add ASCII '0' to each digit byte and insert separators.
   digits |= 0x3030003030003030 | (usep << 16) | (usep << 40);
 
-  constexpr const size_t len = 8;
+  constexpr size_t len = 8;
   if (const_check(is_big_endian())) {
     char tmp[len];
     std::memcpy(tmp, &digits, len);
@@ -1000,16 +1000,16 @@ template <typename T>
 struct has_tm_zone<T, void_t<decltype(T::tm_zone)>> : std::true_type {};
 
 template <typename T, FMT_ENABLE_IF(has_tm_zone<T>::value)>
-bool set_tm_zone(T& time, char* tz) {
+auto set_tm_zone(T& time, char* tz) -> bool {
   time.tm_zone = tz;
   return true;
 }
 template <typename T, FMT_ENABLE_IF(!has_tm_zone<T>::value)>
-bool set_tm_zone(T&, char*) {
+auto set_tm_zone(T&, char*) -> bool {
   return false;
 }
 
-inline char* utc() {
+inline auto utc() -> char* {
   static char tz[] = "UTC";
   return tz;
 }
@@ -2230,7 +2230,7 @@ template <typename Char> struct formatter<std::tm, Char> {
     detail::handle_dynamic_spec(specs.dynamic_width(), specs.width, width_ref_,
                                 ctx);
 
-    auto loc_ref = specs.localized() ? ctx.locale() : detail::locale_ref();
+    auto loc_ref = specs.localized() ? ctx.locale() : locale_ref();
     detail::get_locale loc(static_cast<bool>(loc_ref), loc_ref);
     auto w = detail::tm_writer<basic_appender<Char>, Char, Duration>(
         loc, out, tm, subsecs);

@@ -39,6 +39,27 @@
     <ClInclude Include="logger.h">
       <Filter>Head</Filter>
     </ClInclude>
+    <ClInclude Include="jwt_service.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="to_json.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="unified_data.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="users_database.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="crow_api.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="database.h">
+      <Filter>Head</Filter>
+    </ClInclude>
+    <ClInclude Include="eigen_matrix_serializer.h">
+      <Filter>Head</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyInternet.cpp">
@@ -64,6 +85,18 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="logger.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="jwt_service.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="crow_api.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="database.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="users_database.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
