@@ -82,34 +82,46 @@
   <ItemGroup>
     <ClInclude Include="Acceptor.h" />
     <ClInclude Include="ClientStateManager.h" />
+    <ClInclude Include="crow_api.h" />
+    <ClInclude Include="database.h" />
+    <ClInclude Include="eigen_matrix_serializer.h" />
     <ClInclude Include="Handler.h" />
+    <ClInclude Include="jwt_service.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="metaProcess.h" />
     <ClInclude Include="MyInternet.h" />
     <ClInclude Include="ProcessPool.h" />
     <ClInclude Include="ThreadPool.h" />
+    <ClInclude Include="to_json.h" />
+    <ClInclude Include="unified_data.h" />
+    <ClInclude Include="users_database.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Acceptor.cpp" />
     <ClCompile Include="ClientStateManager.cpp" />
+    <ClCompile Include="crow_api.cpp" />
+    <ClCompile Include="database.cpp" />
     <ClCompile Include="Handler.cpp" />
+    <ClCompile Include="jwt_service.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="mainfunction.cpp" />
     <ClCompile Include="metaProcess.cpp" />
     <ClCompile Include="MyInternet.cpp" />
     <ClCompile Include="ProcessPool.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="users_database.cpp" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <CppLanguageStandard>c++17</CppLanguageStandard>
-      <AdditionalIncludeDirectories>/home/dddy/projects/FirstServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/home/yzyz/projects/include;/usr/include/mysql;/usr/include;/home/yzyz/projects/include/eigen-5.0.0;/home/yzyz/projects/include/jdbc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
       </PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>/usr/lib/x86_64-linux-gnu;/usr/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <LibraryDependencies>mysqlclient;ssl;crypto;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

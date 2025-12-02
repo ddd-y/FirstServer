@@ -13,7 +13,7 @@ TaskData ThreadPool::GetTask()
         task_queue.pop_front();
         return task;
     }
-	return TaskData{ -1,  nullptr, nullptr, false};
+	return TaskData{ -1,  false};
 }
 
 
@@ -71,9 +71,9 @@ void ThreadPool::pDeleteHandler()
 }
 
 
-void ThreadPool::RunHandler(int fd, bool readorwrite, ProcessPool* tprocesspool,MyInternet* newReactor)
+void ThreadPool::RunHandler(int fd, bool readorwrite)
 {
-    TaskData thedata = TaskData{fd,tprocesspool,newReactor,readorwrite};
+    TaskData thedata = TaskData{fd,readorwrite};
     std::lock_guard<std::mutex> lock(task_mutex);
     task_queue.push_back(thedata);
     task_cv.notify_one();
@@ -153,7 +153,7 @@ void ThreadPool::ThreadRun()
                 auto it = NotComHandlers.find(thetaskdata.client_id);
                 if (it == NotComHandlers.end())
                 {
-                    thehandler = new Handler(thetaskdata.client_id, handler_state, thetaskdata.tProcessPool, thetaskdata.tReactor);
+                    thehandler = new Handler(thetaskdata.client_id, handler_state);
                 }
                 else
                 {

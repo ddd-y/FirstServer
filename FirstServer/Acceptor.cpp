@@ -10,14 +10,12 @@ Acceptor::Acceptor(int port)
     if (listenfd == -1) 
     {
         LOG_ERROR("socket create error: {}", std::strerror(errno));
-        exit(EXIT_FAILURE);
     }
     int flags = fcntl(listenfd, F_GETFL, 0);
     if (flags == -1 || fcntl(listenfd, F_SETFL, flags | O_NONBLOCK) == -1) 
     {
         LOG_ERROR("fcntl set listenfd nonblock error: {}", std::strerror(errno));
         close(listenfd);
-        exit(EXIT_FAILURE);
     }
     std::memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;

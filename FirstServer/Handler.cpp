@@ -174,6 +174,8 @@ void Handler::HandleSJ(std::string& command)
 		//handle second type server read
 		LOG_DEBUG("Second type server joining on fd {}", client_fd);
 		TheProcessPool->AddProcess(getMetaProcessByInfo(client_fd));
+		LOG_DEBUG("Server Join IP:{}", TheProcessPool->GetProcessIP());
+
 		TheReactor->modifyEpoll(client_fd, EPOLLOUT | EPOLLET);
 		return;
 	}
@@ -295,9 +297,11 @@ metaProcess Handler::getMetaProcessByInfo(int conn_fd)
 }
 
 
-Handler::Handler(int fd, HandlerState TheState, ProcessPool* NewProcessPool, MyInternet* NewReactor):
-	LastHandleTime(std::chrono::steady_clock::now()), IncompleteMes(""), client_fd(fd), TaskState(TheState), TheProcessPool(NewProcessPool),
-	TheReactor(NewReactor)
+
+Handler::Handler(int fd, HandlerState TheState):
+	LastHandleTime(std::chrono::steady_clock::now()), IncompleteMes(""), client_fd(fd), TaskState(TheState), 
+	TheProcessPool(ProcessPool::getInstance()),
+    TheReactor(MyInternet::getInstance())
 {
 	if (TaskState == READING)
 	{
@@ -308,7 +312,6 @@ Handler::Handler(int fd, HandlerState TheState, ProcessPool* NewProcessPool, MyI
 		CurrentHandle = &Handler::HandleWrite;
 	}
 }
-
 
 bool Handler::Handle()
 {
