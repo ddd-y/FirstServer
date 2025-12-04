@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录与注册</title>
+    <style>
+        /* 保持原有样式不变 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .header {
+            padding: 30px 0;
+            text-align: center;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .server-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 4px 8px;
+            border-radius: 10px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ff4757;
+        }
+        
+        .status-indicator.connected {
+            background-color: #2ed573;
+        }
+        
+        .form-container {
+            padding: 30px;
+        }
+        
+        .form-toggle {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 30px;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            padding: 5px;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-radius: 25px;
+        }
+        
+        .toggle-btn.active {
+            background-color: #6a11cb;
+            color: white;
+        }
+        
+        .form, .dashboard {
+            display: none;
+        }
+        
+        .form.active, .dashboard.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #6a11cb;
+            box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
+            outline: none;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 40px;
+            cursor: pointer;
+            color: #888;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+        
+        .form-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .form-footer a {
+            color: #6a11cb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .token-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .token-info h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .token-display {
+            word-break: break-all;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .dashboard {
+            padding: 20px;
+        }
+        
+        .user-welcome {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .user-welcome h2 {
+            color: #6a11cb;
+            margin-bottom: 10px;
+        }
+        
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+        
+        .feature-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .feature-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-color: #e9ecef;
+        }
+        
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #6a11cb;
+        }
+        
+        .feature-card h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .feature-card p {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .dashboard-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .dashboard-actions .btn {
+            flex: 1;
+        }
+        
+        .records-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .records-section h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .records-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .record-item {
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            border: 1px solid #e9ecef;
+            font-size: 14px;
+        }
+        
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .record-operation {
+            color: #6a11cb;
+        }
+        
+        .record-time {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .record-details {
+            font-size: 12px;
+            color: #555;
+        }
+        
+        /* 新增分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding: 10px 0;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .pagination-info {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .pagination-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .page-btn {
+            padding: 5px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .page-btn:hover:not(:disabled) {
+            background-color: #e9ecef;
+        }
+        
+        .page-btn:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .page-btn.active {
+            background-color: #6a11cb;
+            color: white;
+            border-color: #6a11cb;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 10px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .feature-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>欢迎使用</h1>
+            <p>请登录或注册账户</p>
+            <div class="server-status">
+                <div class="status-indicator" id="status-indicator"></div>
+                <span id="status-text">连接服务器...</span>
+            </div>
+        </div>
+        
+        <div class="form-container">
+            <div id="connection-alert" class="alert alert-info">
+                正在连接服务器，请稍候...
+            </div>
+            
+            <div class="form-toggle">
+                <div class="toggle-btn active" id="login-toggle">登录</div>
+                <div class="toggle-btn" id="register-toggle">注册</div>
+            </div>
+            
+            <div id="login-alert" class="alert"></div>
+            <div id="register-alert" class="alert"></div>
+            
+            <form id="login-form" class="form active">
+                <div class="form-group">
+                    <label for="login-username">用户名</label>
+                    <input type="text" id="login-username" class="form-control" placeholder="请输入用户名" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">密码</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="请输入密码" required>
+                    <span class="password-toggle" id="login-password-toggle">👁️</span>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn" id="login-btn">登录</button>
+                </div>
+                
+                <div class="form-footer">
+                    <a href="#" id="forgot-password">忘记密码？</a>
+                </div>
+            </form>
+            
+            <form id="register-form" class="form">
+                <div class="form-group">
+                    <label for="register-username">用户名</label>
+                    <input type="text" id="register-username" class="form-control" placeholder="请输入用户名" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-password">密码</label>
+                    <input type="password" id="register-password" class="form-control" placeholder="请输入密码（至少6位）" required minlength="6">
+                    <span class="password-toggle" id="register-password-toggle">👁️</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-confirm-password">确认密码</label>
+                    <input type="password" id="register-confirm-password" class="form-control" placeholder="请再次输入密码" required>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn" id="register-btn">注册</button>
+                </div>
+            </form>
+            
+            <div class="dashboard" id="dashboard">
+                <div class="user-welcome">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <h2>欢迎回来, <span id="user-name">用户</span>!</h2>
+                    <p>您已成功登录系统</p>
+                </div>
+                
+                <div class="feature-cards">
+                    <div class="feature-card" id="profile-card">
+                        <div class="feature-icon">👤</div>
+                        <h3>个人资料</h3>
+                        <p>查看和编辑个人信息</p>
+                    </div>
+                    
+                    <div class="feature-card" id="settings-card">
+                        <div class="feature-icon">⚙️</div>
+                        <h3>系统设置</h3>
+                        <p>配置系统参数</p>
+                    </div>
+                    
+                    <div class="feature-card" id="messages-card">
+                        <div class="feature-icon">✉️</div>
+                        <h3>消息中心</h3>
+                        <p>查看系统消息</p>
+                    </div>
+                    
+                    <div class="feature-card" id="reports-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>数据报告</h3>
+                        <p>生成数据分析报告</p>
+                    </div>
+                </div>
+                
+                <div class="records-section" id="records-section">
+                    <h3>计算记录</h3>
+                    <button class="btn" id="get-records-btn" style="margin-bottom: 10px;">获取记录</button>
+                    <div class="records-list" id="records-list">
+                        <!-- 记录将在这里显示 -->
+                    </div>
+                    <!-- 分页控件 -->
+                    <div class="pagination" id="pagination" style="display: none;">
+                        <div class="pagination-info" id="pagination-info"></div>
+                        <div class="pagination-controls">
+                            <button class="page-btn" id="prev-page-btn" disabled>上一页</button>
+                            <button class="page-btn" id="next-page-btn" disabled>下一页</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-actions">
+                    <button class="btn btn-secondary" id="refresh-btn">刷新数据</button>
+                    <button class="btn" id="dashboard-logout-btn">退出登录</button>
+                </div>
+            </div>
+            
+            <div class="token-info" id="token-info">
+                <h3>JWT令牌信息</h3>
+                <p>登录成功！您的JWT令牌已保存到本地存储。</p>
+                <div class="token-display" id="token-display"></div>
+                <button class="btn" id="logout-btn" style="margin-top: 15px;">退出登录</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        // DOM元素
+        const loginToggle = document.getElementById('login-toggle');
+        const registerToggle = document.getElementById('register-toggle');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const loginAlert = document.getElementById('login-alert');
+        const registerAlert = document.getElementById('register-alert');
+        const connectionAlert = document.getElementById('connection-alert');
+        const tokenInfo = document.getElementById('token-info');
+        const tokenDisplay = document.getElementById('token-display');
+        const logoutBtn = document.getElementById('logout-btn');
+        const dashboardLogoutBtn = document.getElementById('dashboard-logout-btn');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const dashboard = document.getElementById('dashboard');
+        const userName = document.getElementById('user-name');
+        const userAvatar = document.getElementById('user-avatar');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const getRecordsBtn = document.getElementById('get-records-btn');
+        const recordsSection = document.getElementById('records-section');
+        const recordsList = document.getElementById('records-list');
+        const pagination = document.getElementById('pagination');
+        const paginationInfo = document.getElementById('pagination-info');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        
+        // 功能卡片
+        const profileCard = document.getElementById('profile-card');
+        const settingsCard = document.getElementById('settings-card');
+        const messagesCard = document.getElementById('messages-card');
+        const reportsCard = document.getElementById('reports-card');
+        
+        // 密码显示/隐藏切换
+        const loginPasswordToggle = document.getElementById('login-password-toggle');
+        const registerPasswordToggle = document.getElementById('register-password-toggle');
+        const loginPassword = document.getElementById('login-password');
+        const registerPassword = document.getElementById('register-password');
+        
+        // 服务器连接状态
+        let serverConnected = false;
+        
+        // 分页状态
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalPages = 1;
+        let totalCount = 0;
+        
+        // 切换登录/注册表单
+        loginToggle.addEventListener('click', () => {
+            loginToggle.classList.add('active');
+            registerToggle.classList.remove('active');
+            loginForm.classList.add('active');
+            registerForm.classList.remove('active');
+            loginAlert.style.display = 'none';
+            registerAlert.style.display = 'none';
+        });
+        
+        registerToggle.addEventListener('click', () => {
+            registerToggle.classList.add('active');
+            loginToggle.classList.remove('active');
+            registerForm.classList.add('active');
+            loginForm.classList.remove('active');
+            loginAlert.style.display = 'none';
+            registerAlert.style.display = 'none';
+        });
+        
+        // 密码显示/隐藏功能
+        loginPasswordToggle.addEventListener('click', () => {
+            if (loginPassword.type === 'password') {
+                loginPassword.type = 'text';
+                loginPasswordToggle.textContent = '🙈';
+            } else {
+                loginPassword.type = 'password';
+                loginPasswordToggle.textContent = '👁️';
+            }
+        });
+        
+        registerPasswordToggle.addEventListener('click', () => {
+            if (registerPassword.type === 'password') {
+                registerPassword.type = 'text';
+                registerPasswordToggle.textContent = '🙈';
+            } else {
+                registerPassword.type = 'password';
+                registerPasswordToggle.textContent = '👁️';
+            }
+        });
+        
+        // 登录表单提交
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!serverConnected) {
+                showAlert(loginAlert, '服务器未连接，请稍后再试', 'error');
+                return;
+            }
+            
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            // 简单验证
+            if (!username || !password) {
+                showAlert(loginAlert, '请输入用户名和密码', 'error');
+                return;
+            }
+            
+            try {
+                // 禁用登录按钮
+                loginBtn.disabled = true;
+                loginBtn.textContent = '登录中...';
+                
+                const response = await loginAPI(username, password);
+                
+                if (response.success) {
+                    // 保存JWT令牌和用户信息到本地存储
+                    localStorage.setItem('jwt_token', response.token);
+                    localStorage.setItem('user_username', username);
+                    localStorage.setItem('user_name', username);
+                    
+                    showAlert(loginAlert, '登录成功！', 'success');
+                    
+                    // 显示功能页面
+                    showDashboard({
+                        username: username,
+                        name: username
+                    });
+                    
+                    // 隐藏登录表单
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'none';
+                    tokenInfo.style.display = 'none';
+                } else {
+                    showAlert(loginAlert, response.message || '登录失败', 'error');
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                showAlert(loginAlert, '登录失败，请稍后重试', 'error');
+            } finally {
+                // 恢复登录按钮
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+            }
+        });
+        
+        // 注册表单提交
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!serverConnected) {
+                showAlert(registerAlert, '服务器未连接，请稍后再试', 'error');
+                return;
+            }
+            
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            // 表单验证
+            if (!validateForm(username, password, confirmPassword)) {
+                return;
+            }
+            
+            try {
+                // 显示加载状态
+                registerBtn.disabled = true;
+                registerBtn.textContent = '注册中...';
+                
+                // 调用注册API
+                const response = await registerAPI(username, password);
+                
+                if (response.success) {
+                    showAlert(registerAlert, '注册成功！', 'success');
+                    
+                    // 注册成功后的处理
+                    handleRegistrationSuccess(response, username);
+                } else {
+                    showAlert(registerAlert, response.message || '注册失败', 'error');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                showAlert(registerAlert, '网络错误，请稍后重试', 'error');
+            } finally {
+                // 恢复按钮状态
+                registerBtn.disabled = false;
+                registerBtn.textContent = '注册';
+            }
+        });
+        
+        // 退出登录
+        logoutBtn.addEventListener('click', logoutUser);
+        dashboardLogoutBtn.addEventListener('click', logoutUser);
+        
+        // 刷新按钮
+        refreshBtn.addEventListener('click', async () => {
+            try {
+                await loadRecords(currentPage, pageSize);
+                showAlert(loginAlert, '数据已刷新！', 'success');
+            } catch (error) {
+                console.error('刷新数据失败:', error);
+                showAlert(loginAlert, '刷新数据失败: ' + error.message, 'error');
+            }
+        });
+        
+        // 获取记录按钮
+        getRecordsBtn.addEventListener('click', async () => {
+            try {
+                await loadRecords(1, pageSize);
+            } catch (error) {
+                console.error('获取记录失败:', error);
+                showAlert(loginAlert, '获取记录失败: ' + error.message, 'error');
+            }
+        });
+        
+        // 分页按钮事件
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                loadRecords(currentPage - 1, pageSize);
+            }
+        });
+        
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                loadRecords(currentPage + 1, pageSize);
+            }
+        });
+        
+        // 功能卡片点击事件
+        profileCard.addEventListener('click', () => {
+            showAlert(loginAlert, '个人资料功能开发中...', 'info');
+        });
+        
+        settingsCard.addEventListener('click', () => {
+            showAlert(loginAlert, '系统设置功能开发中...', 'info');
+        });
+        
+        messagesCard.addEventListener('click', () => {
+            showAlert(loginAlert, '消息中心功能开发中...', 'info');
+        });
+        
+        reportsCard.addEventListener('click', () => {
+            showAlert(loginAlert, '数据报告功能开发中...', 'info');
+        });
+        
+        // 显示提示信息
+        function showAlert(alertElement, message, type) {
+            alertElement.textContent = message;
+            alertElement.className = `alert alert-${type}`;
+            alertElement.style.display = 'block';
+            
+            // 3秒后自动隐藏（除了info类型）
+            if (type !== 'info') {
+                setTimeout(() => {
+                    alertElement.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // 表单验证函数
+        function validateForm(username, password, confirmPassword) {
+            if (!username || !password || !confirmPassword) {
+                showAlert(registerAlert, '请填写所有字段', 'error');
+                return false;
+            }
+            
+            if (username.length < 2 || username.length > 20) {
+                showAlert(registerAlert, '用户名长度应在2-20个字符之间', 'error');
+                return false;
+            }
+            
+            if (password.length < 6) {
+                showAlert(registerAlert, '密码长度至少6位', 'error');
+                return false;
+            }
+            
+            if (password !== confirmPassword) {
+                showAlert(registerAlert, '两次输入的密码不一致', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // 注册API调用函数
+        async function registerAPI(username, password) {
+            const response = await fetch(`${API_BASE}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || '注册失败');
+            }
+            
+            return data;
+        }
+        
+        // 登录API调用函数
+        async function loginAPI(username, password) {
+            const response = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || '登录失败');
+            }
+            
+            return data;
+        }
+        
+        // 退出登录API调用函数
+        async function logoutAPI() {
+            const token = localStorage.getItem('jwt_token');
+            
+            if (!token) {
+                return { success: true };
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                return { success: true };
+            } catch (error) {
+                console.error('退出登录API调用失败:', error);
+                return { success: true };
+            }
+        }
+        
+        // 获取记录API调用函数 - 适配新的数据结构
+        async function getRecordsAPI(page = 1, limit = 10) {
+            const token = localStorage.getItem('jwt_token');
+            
+            if (!token) {
+                throw new Error('未找到认证令牌，请重新登录');
+            }
+            
+            const url = `${API_BASE}/auth/get_records?page=${page}&limit=${limit}`;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                // 如果是401错误，说明token过期或无效
+                if (response.status === 401) {
+                    localStorage.removeItem('jwt_token');
+                    localStorage.removeItem('user_username');
+                    localStorage.removeItem('user_name');
+                    showAlert(loginAlert, '登录已过期，请重新登录', 'error');
+                    logoutUser();
+                }
+                throw new Error(data.message || '获取记录失败');
+            }
+            
+            return data;
+        }
+        
+        // 加载记录并更新分页状态
+        async function loadRecords(page, limit) {
+            try {
+                const response = await getRecordsAPI(page, limit);
+                
+                if (response.success) {
+                    // 更新分页状态
+                    currentPage = page;
+                    pageSize = limit;
+                    totalPages = response.pagination.total_page || 1;
+                    totalCount = response.pagination.total_count || 0;
+                    
+                    // 显示记录
+                    displayRecords(response);
+                    
+                    // 更新分页控件
+                    updatePaginationControls();
+                } else {
+                    throw new Error(response.message || '获取记录失败');
+                }
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        // 更新分页控件状态
+        function updatePaginationControls() {
+            // 显示分页信息
+            paginationInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页，总计 ${totalCount} 条记录`;
+            
+            // 更新按钮状态
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= totalPages;
+            
+            // 显示分页控件
+            pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+        }
+        
+        // 检查服务器连接状态
+        async function checkServerConnection() {
+            try {
+                showAlert(connectionAlert, '正在连接服务器，请稍候...', 'info');
+                
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    // 服务器连接成功
+                    serverConnected = true;
+                    statusIndicator.classList.add('connected');
+                    statusText.textContent = '已连接';
+                    connectionAlert.style.display = 'none';
+                    
+                    console.log('服务器连接成功');
+                } else {
+                    throw new Error('服务器响应异常');
+                }
+            } catch (error) {
+                console.error('服务器连接失败:', error);
+                serverConnected = false;
+                statusIndicator.classList.remove('connected');
+                statusText.textContent = '未连接';
+                
+                showAlert(connectionAlert, '无法连接到服务器，请确保服务器正在运行在端口8080', 'error');
+                
+                // 5秒后重试
+                setTimeout(checkServerConnection, 5000);
+            }
+        }
+        
+        // 注册成功处理
+        function handleRegistrationSuccess(response, username) {
+            // 自动填充登录表单
+            setTimeout(() => {
+                loginToggle.click();
+                document.getElementById('login-username').value = username;
+                document.getElementById('register-username').value = '';
+                document.getElementById('register-password').value = '';
+                document.getElementById('register-confirm-password').value = '';
+            }, 1500);
+        }
+        
+        // 显示功能页面
+        function showDashboard(userData) {
+            // 设置用户信息
+            const name = userData.name || userData.username || '用户';
+            userName.textContent = name;
+            userAvatar.textContent = name.charAt(0).toUpperCase();
+            
+            // 显示功能页面
+            dashboard.classList.add('active');
+            recordsSection.style.display = 'block';
+        }
+        
+        // 显示记录 - 适配新的数据结构
+        function displayRecords(response) {
+            recordsList.innerHTML = '';
+            
+            if (!response.success || !response.data || response.data.length === 0) {
+                recordsList.innerHTML = '<div class="record-item">暂无计算记录</div>';
+                pagination.style.display = 'none';
+                return;
+            }
+            
+            response.data.forEach(record => {
+                const recordItem = document.createElement('div');
+                recordItem.className = 'record-item';
+                
+                // 创建记录头部
+                const recordHeader = document.createElement('div');
+                recordHeader.className = 'record-header';
+                
+                const operationSpan = document.createElement('span');
+                operationSpan.className = 'record-operation';
+                operationSpan.textContent = getOperationName(record.operation_type);
+                
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'record-time';
+                statusSpan.textContent = `状态: ${getStatusName(record.status)}`;
+                
+                recordHeader.appendChild(operationSpan);
+                recordHeader.appendChild(statusSpan);
+                
+                // 创建记录详情
+                const recordDetails = document.createElement('div');
+                recordDetails.className = 'record-details';
+                
+                let detailsText = '';
+                
+                if (record.matrix_size_rows && record.matrix_size_cols) {
+                    detailsText += `矩阵大小: ${record.matrix_size_rows}×${record.matrix_size_cols} `;
+                }
+                
+                // 可以添加更多显示逻辑，根据input_data和output_data的内容
+                if (record.input_data && typeof record.input_data === 'object') {
+                    detailsText += `输入数据: ${JSON.stringify(record.input_data).substring(0, 30)}... `;
+                }
+                
+                if (record.output_data && typeof record.output_data === 'object') {
+                    detailsText += `输出数据: ${JSON.stringify(record.output_data).substring(0, 30)}...`;
+                }
+                
+                recordDetails.textContent = detailsText || '无详细数据';
+                
+                recordItem.appendChild(recordHeader);
+                recordItem.appendChild(recordDetails);
+                
+                recordsList.appendChild(recordItem);
+            });
+        }
+        
+        // 获取操作类型的中文名称
+        function getOperationName(operationType) {
+            const operationNames = {
+                'addition': '矩阵加法',
+                'multiplication': '矩阵乘法',
+                'inverse': '矩阵求逆',
+                'determinant': '行列式计算',
+                'eigenvalues': '特征值计算',
+                'eigenvectors': '特征向量计算',
+                'svd': '奇异值分解',
+                'linear_system': '线性方程组求解',
+                'expression': '表达式计算',
+                'custom': '自定义计算'
+            };
+            
+            return operationNames[operationType] || operationType;
+        }
+        
+        // 获取状态的中文名称
+        function getStatusName(status) {
+            const statusNames = {
+                'completed': '已完成',
+                'processing': '处理中',
+                'failed': '失败',
+                'pending': '等待中'
+            };
+            
+            return statusNames[status] || status;
+        }
+        
+        // 退出登录
+        async function logoutUser() {
+            try {
+                // 调用退出登录API
+                await logoutAPI();
+            } catch (error) {
+                console.error('退出登录API调用失败:', error);
+            } finally {
+                // 清除本地存储
+                localStorage.removeItem('jwt_token');
+                localStorage.removeItem('user_username');
+                localStorage.removeItem('user_name');
+                
+                // 重置分页状态
+                currentPage = 1;
+                totalPages = 1;
+                totalCount = 0;
+                
+                // 隐藏功能页面和令牌信息
+                dashboard.classList.remove('active');
+                tokenInfo.style.display = 'none';
+                recordsSection.style.display = 'none';
+                pagination.style.display = 'none';
+                
+                // 显示登录表单
+                loginForm.style.display = 'block';
+                loginToggle.click();
+                document.getElementById('login-password').value = '';
+                
+                showAlert(loginAlert, '您已成功退出登录', 'success');
+            }
+        }
+        
+        // 检查是否已登录
+        function checkLoginStatus() {
+            const token = localStorage.getItem('jwt_token');
+            const username = localStorage.getItem('user_username');
+            const name = localStorage.getItem('user_name');
+            
+            if (token && username) {
+                // 显示功能页面
+                showDashboard({ 
+                    username: username,
+                    name: name || username
+                });
+                
+                // 隐藏登录表单
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'none';
+            }
+        }
+        
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            // 检查登录状态
+            checkLoginStatus();
+            
+            // 检查服务器连接
+            checkServerConnection();
+        });
+    </script>
+</body>
+</html>

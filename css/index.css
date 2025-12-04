@@ -1,0 +1,227 @@
+ /* ===== 基础样式重置 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 10px;
+        }
+
+        /* ===== 页面背景设置 ===== */
+        /* 使用渐变背景创建二次元风格 */
+        html::before{
+            content: '';
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            z-index: -1;
+            background: linear-gradient(135deg, #ffcfe5, #a6c1ff);
+        }
+
+        /* ===== 文本选择样式 ===== */
+        ::selection{
+            color: #fff;
+            background-color: rgb(144,129,241);
+        }
+
+        /* ===== 装饰元素 ===== */
+        /* 使用绝对定位创建背景装饰元素，增强视觉吸引力 */
+        .anime-decoration {
+            position: absolute;
+            z-index: -1;
+        }
+
+        .decoration-1 {
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            top: 10%;
+            left: 5%;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        }
+
+        .decoration-2 {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            top: 70%;
+            right: 10%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        .decoration-3 {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            transform: rotate(45deg);
+            bottom: 10%;
+            left: 15%;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+        }
+
+        /* ===== 主容器样式 ===== */
+        /* 使用半透明背景和圆角创建卡片效果 */
+        .box{
+            display: flex;
+            width: 90rem;
+            height: 55rem;
+            background-color: rgba(255, 255, 255, 60%);
+            border-radius: 1.5rem;
+            margin: 10% auto;
+            box-shadow: 0 0 1rem 0.2rem rgb(0 0 0 /10%);
+            overflow: hidden; /* 确保内部元素不溢出 */
+        }
+
+        /* ===== 左侧区域样式 ===== */
+        /* 使用背景图片创建视觉吸引力 */
+        .box .left{
+            position: relative;
+            width: 35%;
+            height: 100%;
+            background-color: skyblue;
+        }
+
+        .box .left::before{
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url(.//7320BAAE2EDBE7608A236B1FE5F454C6.jpg);         
+            background-size: cover;
+            opacity: 90%;
+        }
+
+        /* ===== 右侧区域样式 ===== */
+        /* 使用Flex布局垂直排列元素 */
+        .box .right{
+            display: flex;
+            width: 65%;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .box .right h4{
+            color: rgb(144,129,241);
+            font-size: 3rem;
+            margin-top: 5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* ===== 表单样式 ===== */
+        /* 使用Flex布局创建响应式表单 */
+        .box .right form{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .box .right form .acc{
+            outline: none;
+            width: 80%;
+            height: 5rem;
+            font-size: 1.6rem;
+            margin-top: 2rem;
+            padding: 1rem 0 0 1.6rem;
+            border: none;
+            border-bottom: 1px solid rgb(144,129,241) ;
+            color:  rgb(144,129,241);
+            background-color: rgba(0,0,0,0);
+        }
+
+        .right form .acc:focus {
+            outline: none;
+            color:  rgb(144,129,241);
+            padding: 1rem 0 0 1.6rem;
+        }
+
+        .right .sub {
+            width: 60%;
+            height: 5rem;
+            color: #f6f6f6;
+            background-image: linear-gradient(120deg,#e0c3fc 0%, #8ec5fc 100%);
+            font-size: 1.4rem;
+            border: none;
+            border-radius: 0.5rem;
+            margin: 6rem 0 0 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .right .sub:hover{
+            box-shadow: 0 0 2rem -0.5rem rgb(0 0 0 / 20%);
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        /* ===== 功能链接样式 ===== */
+        .right .fn{
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            width: 70%;
+        }
+        .right .fn a{
+            font-size: 1.3rem;
+            padding: 1rem 2rem;
+            color:#666;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .right .fn a:hover{
+            color:rgb(144,129,241);
+        }
+
+        /* ===== 消息提示样式 ===== */
+        .message {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 1.4rem;
+            text-align: center;
+            width: 100%;
+        }
+
+        .message.success {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .message.error {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #c62828;
+            border: 1px solid #f44336;
+        }
+
+        .message.info {
+            background-color: rgba(33, 150, 243, 0.2);
+            color: #1565c0;
+            border: 1px solid #2196f3;
+        }
+
+        /* ===== 响应式设计 ===== */
+        @media (max-width: 768px) {
+            .box {
+                width: 95%;
+                height: auto;
+                flex-direction: column;
+            }
+            
+            .box .left {
+                width: 100%;
+                height: 20rem;
+            }
+            
+            .box .right {
+                width: 100%;
+                padding: 2rem;
+            }
+        }
